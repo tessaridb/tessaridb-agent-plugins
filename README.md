@@ -2,15 +2,18 @@
 
 Plugins that let an agent work with [TessariDB](https://tessaridb.com).
 
-This repository is a **marketplace index**. It holds no plugin code of its own — each entry points
-at the repository where that plugin actually lives, so a plugin is released on its own schedule and
-nothing has to be vendored here to be listed.
+This repository is the **marketplace** and the plugins themselves. Installing a plugin from here
+clones this repository and nothing else: a plugin never drags a product's source tree along behind
+it, and that stays true whether the product is public or not.
+
+An entry may also point at another repository when a plugin has reason to live elsewhere; the
+section at the end shows both forms.
 
 ## What is in it
 
-| Plugin | What it does | Lives in |
-|---|---|---|
-| `tessaridb-agent-memory` | Memory for an agent, stored in TessariDB: stands the store and the memory service up locally, registers the memory server, and carries a skill that says when to reach for it. | [`tessaridb-agent-memory`](https://github.com/tessaridb/tessaridb-agent-memory) |
+| Plugin | What it does |
+|---|---|
+| `tessaridb-agent-memory` | Memory for an agent, stored in TessariDB: registers the memory server and carries a skill that says when to reach for it and what a round trip looks like. |
 
 ## Install
 
@@ -18,7 +21,7 @@ Add the marketplace, then install what you want from it:
 
 ```shell
 /plugin marketplace add tessaridb/tessaridb-agent-plugins
-/plugin install tessaridb-agent-memory@tessaridb-agent-plugins
+/plugin install tessaridb-agent-memory@tessaridb
 ```
 
 To keep a local copy current after a plugin is updated:
@@ -35,7 +38,7 @@ without a prompt of their own:
 ```json
 {
   "extraKnownMarketplaces": {
-    "tessaridb-agent-plugins": {
+    "tessaridb": {
       "source": {
         "source": "github",
         "repo": "tessaridb/tessaridb-agent-plugins"
@@ -43,7 +46,7 @@ without a prompt of their own:
     }
   },
   "enabledPlugins": {
-    "tessaridb-agent-memory@tessaridb-agent-plugins": true
+    "tessaridb-agent-memory@tessaridb": true
   }
 }
 ```
@@ -62,11 +65,14 @@ that repository's own instructions cover it.
 Without either, the plugin installs cleanly and the server then refuses to start, which reads like a
 plugin fault and is not one.
 
-## Access
+## Installing is not the same as running
 
-`tessaridb-agent-memory` is a private repository, and the entry above pins its `dev` branch. Anyone
-installing the plugin needs git access to it; without that, `/plugin install` cannot fetch the
-source. That will change when the repository opens.
+The plugin installs from here for anyone, with no access to anything else. What it installs is a
+**registration and a skill**, not the memory itself — so until the two things above are true on the
+machine, the plugin is present and the server does not come up.
+
+That split is deliberate. The memory layer is a separate product with its own repository and its own
+licence, and a plugin that carried it would make every install a copy of that product.
 
 ## Adding a plugin here
 

@@ -1,0 +1,7 @@
+{
+  "mcpServers": {
+    "tessaridb-am": {
+      "command": "tessari-am-mcp-run"
+    }
+  }
+}

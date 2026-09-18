@@ -1,0 +1,8 @@
+{
+  "name": "tessaridb-agent-memory",
+  "version": "0.0.1",
+  "description": "Agent memory on TessariDB: stand the store and the memory service up locally, register the memory server, and carry the skill that says how to use it.",
+  "author": { "name": "boogvar" },
+  "license": "BUSL-1.1",
+  "keywords": ["memory", "agent-memory", "tessaridb", "mcp"]
+}

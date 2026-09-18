@@ -1,6 +1,6 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
-  "name": "tessaridb-agent-plugins",
+  "name": "tessaridb",
   "description": "Plugins that let an agent work with TessariDB. The first is the agent memory that keeps what a session learns; others will sit beside it.",
   "owner": {
     "name": "boogvar"
@@ -14,12 +14,7 @@
       },
       "category": "productivity",
       "version": "0.0.1",
-      "source": {
-        "source": "git-subdir",
-        "url": "https://github.com/tessaridb/tessaridb-agent-memory.git",
-        "path": "plugins/agent-memory",
-        "ref": "dev"
-      }
+      "source": "./plugins/agent-memory"
     }
   ]
 }
