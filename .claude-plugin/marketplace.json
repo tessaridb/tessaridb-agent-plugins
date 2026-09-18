@@ -1,0 +1,25 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "tessaridb-agent-plugins",
+  "description": "Plugins that let an agent work with TessariDB. The first is the agent memory that keeps what a session learns; others will sit beside it.",
+  "owner": {
+    "name": "boogvar"
+  },
+  "plugins": [
+    {
+      "name": "tessaridb-agent-memory",
+      "description": "Agent memory on TessariDB: stand the store and the memory service up locally, register the memory server, and carry the skill that says how to use it.",
+      "author": {
+        "name": "boogvar"
+      },
+      "category": "productivity",
+      "version": "0.0.1",
+      "source": {
+        "source": "git-subdir",
+        "url": "https://github.com/tessaridb/tessaridb-agent-memory.git",
+        "path": "plugins/agent-memory",
+        "ref": "dev"
+      }
+    }
+  ]
+}
