@@ -53,23 +53,50 @@ without a prompt of their own:
 
 ## Before the memory plugin will work
 
-The plugin registers a memory server; it does not carry one. Two things have to be true on the
-machine first.
+The plugin registers a memory server; it does not carry one. It connects over HTTP to
+`http://127.0.0.1:39142/mcp`, which is where the published container serves it, so that container
+has to be running on the machine first.
 
-**A node to talk to.** The memory is stored in TessariDB, so a store has to be running and reachable.
+Choose the first owner's passphrase — it is what you type in the browser when the agent asks to
+be authorized — and start the container:
 
-**The launcher on `PATH`.** The plugin starts the server by name, as `tessari-am-mcp-run`, so the
-command has to be installed and findable. Installing it is part of standing the memory layer up, and
-that repository's own instructions cover it.
+```sh
+mkdir -m 700 -p ~/.tessaridb
+read -rs "p?Passphrase for the first owner: " && printf '%s\n' "$p" > ~/.tessaridb/owner-passphrase; unset p
+chmod 644 ~/.tessaridb/owner-passphrase   # the container reads it; the directory keeps others out
+docker run -d --name agent-memory --restart unless-stopped --stop-timeout 30 \
+  -p 127.0.0.1:39142:39142 \
+  -v tessaridb-agent-memory:/var/lib/tessaridb \
+  -v ~/.tessaridb/owner-passphrase:/run/secrets/owner-passphrase:ro \
+  -e TESSARI_AM_OWNER=ada -e TESSARI_AM_OWNER_IDENTITY=acme \
+  -e TESSARI_AM_OWNER_PASSPHRASE_FILE=/run/secrets/owner-passphrase \
+  tessaridb/agent-memory:latest
+```
 
-Without either, the plugin installs cleanly and the server then refuses to start, which reads like a
-plugin fault and is not one.
+(`read -rs "p?…"` is zsh; in bash it is `read -rsp "…" p`.) The container carries the database
+and the memory service together, and the named volume keeps the store across restarts and
+upgrades. `--stop-timeout 30` gives `docker stop` the time it needs to close the store cleanly.
+
+Then, in Claude Code, `/mcp` → `tessaridb-am` → **Authenticate** opens the browser; sign in as
+the owner with the passphrase and approve. The browser returns to `127.0.0.1:39143`, so that port
+has to be free while you sign in.
+
+The address is fixed: the plugin expects port **39142** on the local machine. If the container
+publishes a different port, register the server yourself instead of through the plugin:
+
+```sh
+claude mcp add --transport http -s user --client-id claude-code --callback-port 39143 \
+  tessaridb-am http://127.0.0.1:<port>/mcp
+```
+
+A server registered that way and the plugin's own are two entries for the same memory; keep one.
 
 ## Installing is not the same as running
 
 The plugin installs from here for anyone, with no access to anything else. What it installs is a
-**registration and a skill**, not the memory itself — so until the two things above are true on the
-machine, the plugin is present and the server does not come up.
+**registration and a skill**, not the memory itself — so until the container is running, the
+plugin is present and `/mcp` shows the server as failed to connect, which reads like a plugin
+fault and is not one.
 
 That split is deliberate. The memory layer is a separate product with its own repository and its own
 licence, and a plugin that carried it would make every install a copy of that product.
