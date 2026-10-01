@@ -163,6 +163,5 @@ cache_lookup { embedding: { vector, model }, threshold: 0.95 }
 
 ## Logging what happened
 
-`activity_log { verb, object: { table, id }, note }`, with `verb` one of `created`, `updated`,
-`closed`, `superseded`, `claimed`, `released`, `promoted`, `validated`. It changes nothing; it makes
-the history answerable later. Log the acts other agents would want to reconstruct.
+See writing.md. Log the acts other agents would want to reconstruct: a task closed, an idea
+promoted, a decision superseded.

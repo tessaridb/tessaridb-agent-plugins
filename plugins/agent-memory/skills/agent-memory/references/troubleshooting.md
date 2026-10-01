@@ -69,3 +69,16 @@ tessari-am admin credential.revoke
 
 It stops the credential admitting anyone and ends its logins. `tessari-am --help` lists every
 operator command. The person runs it, not you.
+
+## A tool answers that it is not carried out
+
+Some tools are listed but their backing isn't built yet. Their descriptions start with
+`[not carried out]`, and they answer by saying so instead of pretending:
+
+| Not built | Use instead |
+|---|---|
+| `changes_since` | `recall` and `status` |
+| `export`, `import` | nothing yet; the store can't be taken out through the tools |
+| `status` at widths `group` and `installation` | `status` at widths `me` and `project` |
+| paging a ranked search with `page.after` | a narrower query or a larger `page.limit` |
+
