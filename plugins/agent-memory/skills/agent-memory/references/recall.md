@@ -25,6 +25,14 @@ deliberately rather than concluding the store is empty.
 `text` is matched against memories, facts and records. Use the words the writer would have used:
 names of components, error messages, file names. Several short searches beat one long sentence.
 
+From `0.3.0-alpha`, memories and facts are ranked together as one collection, so a record holding
+more of your words ranks above one holding fewer, whichever kind it is. Common English words (`the`,
+`of`, `is`, `how`) do not count toward a match, and any of your words is enough to find a record.
+The analyzer folds case, accents and word endings, so `deploy` also finds `deployed`.
+
+A word ending in `*` is a prefix: `auth*` finds `authorize` and `authentication`. A starred word
+shorter than three letters is searched as the plain word.
+
 ## Topics
 
 `topics` restricts the search to a closed set of subjects: `architecture`, `decision`, `pattern`,
