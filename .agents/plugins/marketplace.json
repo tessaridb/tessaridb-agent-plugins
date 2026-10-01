@@ -1,0 +1,32 @@
+{
+  "name": "tessaridb",
+  "interface": {
+    "displayName": "TessariDB"
+  },
+  "plugins": [
+    {
+      "name": "tessaridb",
+      "source": {
+        "source": "local",
+        "path": "./plugins/tessaridb"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Coding"
+    },
+    {
+      "name": "tessaridb-agent-memory",
+      "source": {
+        "source": "local",
+        "path": "./plugins/agent-memory"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_USE"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

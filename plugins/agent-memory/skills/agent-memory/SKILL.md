@@ -1,109 +1,170 @@
 ---
 name: agent-memory
-description: Use TessariDB Agent Memory to keep what you learn past the end of a context window, and to read what earlier sessions already learned. Reach for this when you are starting work in a project you may have worked in before, when you learn something worth keeping, when you are about to start a task somebody else may already hold, or when the memory server refuses a call and you need to know what to do about it.
+description: Use TessariDB Agent Memory to keep what you learn past the end of a context window and to read what earlier sessions learned. Use it when starting work in a project you may have worked in before, when you learn something expensive to re-learn, before guessing at something that was probably tried, before starting a task another agent may hold, when tracking goals, tasks, decisions, checklists or a release, and when a memory tool refuses a call.
 ---
 
 # Agent memory
 
-There is a store here for what an agent learns. It outlives your context window, it is readable by
-whoever works in this project next, and it is reached through a set of verbs served as tools.
+TessariDB Agent Memory is a store for what agents learn. It outlives your context window, it is
+shared by every agent that works in the same project, and you reach it through the `tessaridb-am`
+tools. Each tool's schema says what it takes. This skill covers what a schema can't: when to use
+the store, which tool fits which job, and what a complete round trip looks like.
 
-The tool list tells you what each verb takes. This tells you the two things a tool list structurally
-cannot: **when to reach for the store at all**, and **what a whole round trip looks like**.
+More detail is in the files next to this one:
 
-## When to reach for it
+- [references/workflows.md](references/workflows.md): goals, tasks, decisions, checklists and releases from start to finish.
+- [references/recall.md](references/recall.md): reading well. Scope, topics, hops, vectors, witnesses.
+- [references/troubleshooting.md](references/troubleshooting.md): refusals, an unreachable server, signing in, revoking a credential.
 
-Four moments. None of them announces itself, which is why they are written down.
+## The five moments to use it
 
-**Before you start.** You are in a project you may have been in before, and you have no memory of it
-because a context window ended. Ask `status` what is going on here. If the work you are about to
-start is a task, `task_claim` it before you begin — an unclaimed task is one two agents will both
-start, and the second one finds out late.
+1. **Arriving.** Call `session_start` with your agent name and the absolute folder you work in. Then
+   call `status` with `width: "project"` to see what is open here and who else is active.
+2. **Before guessing.** Call `recall` with a few words about the problem. An empty answer costs
+   one call. Rediscovering a known failure costs the afternoon.
+3. **Before starting shared work.** Call `task_claim` on the task. If somebody holds it, you are
+   told who holds it and until when. That is an answer, not a transient error, so do something else.
+4. **After learning something expensive.** Write it down at once. That covers a measurement, a
+   failure mode, a dead end, or a decision and its reason. You will not remember to do it later,
+   because "later" is in a context window you will not have.
+5. **Leaving.** Call `session_end` with `reason: "closed"`. That releases your claims and leaves the
+   next agent a reason instead of a timeout.
 
-**When you learn something that was expensive to learn.** A measurement, a failure mode, a thing
-that turned out not to work, a decision and its reason. If re-deriving it would cost what deriving
-it cost, it belongs in the store. `remember` it while you still have it in front of you; an
-intention to write it down later does not survive the window either.
+While you work for a long time without calling anything, send `session_heartbeat` now and then.
+From outside, a long pause looks exactly like a crash, and a crashed-looking session can have its
+claims handed to someone else. A heartbeat does **not** extend a claim. A claim ends on the
+deadline it was given when you took it, so take the task again if you are still on it.
 
-**When you are about to guess.** Something was probably tried before. `recall` it first. A search
-that comes back empty costs one call; a rediscovery costs the afternoon.
+## Starting a session
 
-**When you stop.** `session_end`, with a reason. Otherwise the next agent inherits a session that
-looks crashed and has to decide what that means.
+```
+session_start { agent: "claude-code", path: "/abs/path/to/the/project" }
+```
 
-## The round trip
+- `agent` is the name this installation knows your client by (`claude-code` for Claude Code).
+  Every later call is attributed to it.
+- `path` is the folder you are in. The nearest *declared* folder at or above it decides the group
+  and the project, so every agent working in one project folder lands in the same project.
+- If the folder has never been declared, the call is refused, and the refusal says so. **Ask the
+  person**. Only they know whether the folder is one project or a group of projects. Then call
+  again with what they said:
 
-This is the whole path, from no session to a memory read back. Verbs are named the way the tool list
-names them; the arguments each one takes are in its own schema and are not repeated here.
+```
+session_start { agent: "claude-code", path: "/work/acme",
+                declare: { kind: "group", subprojects: ["api", "web"] } }
+session_start { agent: "claude-code", path: "/work/tool",
+                declare: { kind: "project" } }
+```
 
-1. `session_start` — announce yourself. Every other verb is refused before it, and the refusal says
-   so, so getting this wrong is loud rather than silent.
-2. `remember` — write down what you learned, in your own words.
-3. `recall` — search. Text, filters and links are ranked together; you do not choose a search mode.
-4. `session_end` — finish, and release what you were holding.
+The declaration is recorded once. Later sessions in that folder need only `path`.
 
-A `recall` that finds nothing is worth one more thought before you believe it: reads are scoped to
-the project you are in unless you widen them deliberately, so an empty answer can mean *looking in
-the wrong place* rather than *nothing is there*.
+Every other tool is refused until `session_start` has succeeded. After your client's context is
+compacted or restarted, you are a new session as far as the service is concerned. Call it again.
 
-## The one choice that goes wrong quietly
+## Three ways to write, and the one that goes wrong quietly
 
-Three verbs write, they look interchangeable, and picking the wrong one is not refused.
-
-| verb | what it means | who acts on it |
+| Tool | It means | Use it for |
 |---|---|---|
-| `remember` | what **you** believe. No evidence required. Allowed to be wrong. | you, and anybody reading your reasoning |
-| `item_add` | a record the **project** vouches for — a goal, a task, a question, a decision | other agents, as fact |
-| `activity_log` | something **happened**. Changes nothing else. | anybody reconstructing what occurred |
+| `remember` | what **you** believe. No evidence needed, and it may be wrong. | notes, hunches, what you tried, how something works |
+| `remember` with `as_fact` | something the **project** vouches for, with evidence | a confirmed measurement, a verified behaviour, an established rule of the code |
+| `item_add` | a **record** other agents act on | goals, tasks, plans, questions, decisions, risks, ideas, rules, documents, checklists |
+| `activity_log` | that something **happened**. Changes nothing else. | "closed task X", "promoted idea Y", so the history can be read back later |
 
-Writing a belief as a project record is the common mistake and the expensive one, because the next
-agent has no way to tell that it was a guess.
+Picking the wrong one is not refused. The expensive mistake is writing a guess as a project record
+or a confirmed fact: the next agent can't tell it was a guess, and acts on it.
 
-## What the server tells you, so this does not
+### `remember`
 
-Do not look for it here — look at what the connection already gave you.
+```
+remember { kind: "semantic",
+           body: "The importer drops rows whose date is in DD.MM.YYYY; it only parses ISO 8601." }
+```
 
-- **Which verbs exist, and what each one takes.** The tool list, with a schema per verb. It is built
-  from the service's own verb set, so it cannot be out of date the way a written list would be.
-- **Which verbs only read.** Each verb is annotated; a read-only verb is safe to try.
-- **Which verbs are described but not carried out.** A few are: the need is real and the backing is
-  not, and each says which of the two it is in its own summary, before you build a plan on it.
-- **The service's own orientation.** Sent once when the connection opens.
+`kind` decides how long the memory lives and what it is for:
+
+- `working`: scratch for the task in hand. Short-lived.
+- `episodic`: what happened in a session ("tried X, it failed because Y").
+- `semantic`: how something is ("service A calls B over gRPC with a 2 s deadline").
+- `procedural`: how to do something ("to rebuild the index, run …").
+- `instruction`: something a person told you to do or not do.
+- `uncertainty`: something you are unsure of and want checked.
+
+Write the body so it stands on its own. The reader will not have your context: give names, paths,
+numbers and the reason, not "as discussed".
+
+To make it a project fact, add `as_fact` with **one** claim:
+
+```
+remember { kind: "semantic", body: "…full explanation…",
+           as_fact: { title: "Importer accepts ISO dates only",
+                      statement: "The CSV importer parses dates as ISO 8601 and drops other formats.",
+                      topic: "failure-mode", confidence: "confirmed", provenance: "code-audit",
+                      evidence: [{ kind: "code", locator: "src/import/csv.rs:142" }] } }
+```
+
+`confidence: "confirmed"` needs evidence and is refused without it. Use `probable` or
+`hypothesis` when you can't point at anything. A fact holds one claim, so that a later finding can
+supersede it cleanly.
+
+If you have an embedding of the text, pass it as `embedding: { vector, model }`. It must be 384
+numbers wide. Any other width is not stored, but the memory still is, and the answer says so.
+
+## Reading
+
+`recall` is the one way to read. Text, topic filters and links are ranked together, and every hit
+says where it came from.
+
+```
+recall { text: "importer date format" }
+recall { text: "flaky test", topics: ["failure-mode"] }
+recall { text: "auth redesign", hops: 1 }          # also return what the hits link to
+```
+
+It reads **your project only** unless you widen it on purpose with `reach`. An empty answer may
+mean you are looking in the wrong place, not that nothing exists. See [references/recall.md](references/recall.md).
+
+## Records other agents act on
+
+`item_add` creates one of ten families: `goal`, `task`, `plan`, `question`, `decision`, `risk`,
+`idea`, `rule`, `artifact` (a document such as a research note, report or critique) and
+`checklist`. The family decides which fields are required. A missing one is refused by its field
+name, so read the refusal and add it.
+
+`item_update` changes an item. Two things to know:
+
+- `expected_version` is required. Pass the version you read. If someone changed the item since,
+  your write is refused instead of silently overwriting theirs: read it again and redo the change.
+- `content` **replaces** the item. It is not a patch, so send the whole item as it should now read.
+  Omit `content` to change only the `status`.
+
+A status move the lifecycle doesn't allow is refused, and the refusal lists the moves that are
+allowed. You never have to guess the state machine.
+
+`item_link` relates two existing records (`parent_of`, `goal_parent_of_goal`, `blocks`,
+`relates_to`). Both ends must exist. Repeating a link is harmless.
+
+The full lifecycles and worked examples are in [references/workflows.md](references/workflows.md).
 
 ## A refusal is an answer
 
-It carries a code, the field it is about, and what to do instead. Read it and change the call. Do
-not send the identical call again — nothing about the second attempt will be different.
+A refused call carries a code, the field it is about, and what to do instead. Read it and change
+the call. Never send the identical call again, because nothing about the second try is different.
 
-## When the server is not there
+Three answers look alike and are not:
 
-The memory server runs as a child of your client, so it is present or it is not, and nothing you can
-call will bring it back. If the tools are missing, say so and carry on working: the client has to be
-restarted by the person using it.
+- **Refused**: your call is wrong or not allowed. Change it.
+- **Unavailable**: the service or the database could not answer right now. Retrying later is fine.
+- **Empty**: the call worked and nothing matched. Consider whether you looked in the right scope.
 
-If a shell is available, the same verbs are reachable as `tessari-am <verb>`, which reads its own
-settings and needs no client. Use it to check whether the store is up before concluding it is down.
+## Tools that are described but not carried out
 
-## When a credential has to be taken back
+Some tools exist in the list but their backing is not built yet. Their descriptions start with
+`[not carried out]`, and they answer by saying so: `changes_since`, `export`, `import`, `status` at
+widths `group` and `installation`, and the `page.after` cursor on a ranked search. Don't build a
+plan on them. Use `recall` and `status` (widths `me` and `project`) instead.
 
-The tools cannot do it, and that is deliberate rather than missing. Adding a user, blocking one,
-granting authority and withdrawing it are operator acts. An agent never performs them, so carrying
-them as tools would cost every agent eight more lines to read on every turn and save nobody
-anything.
+## What this store is not
 
-They live on the command line instead, and they reach the same node over the wire, so it makes no
-difference whether the store runs on this machine or another one. `tessari-am --help` lists all
-eight with what each one does, built from the set the program itself dispatches, so that list
-cannot drift out of date. The one worth knowing before you need it is
-`tessari-am admin credential.revoke`, which stops a credential admitting anybody and takes its
-logins with it.
-
-If you are an agent and a credential has leaked, say so and name that command rather than looking
-for a verb. There is no verb, the refusal you get will not explain why, and the person reading you
-is the one with the shell.
-
-## What this is not
-
-It is not where your plans, your progress notes or your governance state live. Those are files, and
-they have to be readable when nothing is running. This store holds what files cannot: recall that
-spans the sessions, the projects and the machines the files are not on.
+It is not where your plans, progress notes or repository files live. Those belong in files that
+can be read with nothing running. The store holds what files can't give you: memory that spans
+sessions, projects, agents and machines, and records several agents coordinate on.

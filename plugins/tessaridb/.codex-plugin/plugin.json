@@ -1,0 +1,23 @@
+{
+  "name": "tessaridb",
+  "version": "0.1.0",
+  "description": "Work with TessariDB: write TessariQL, design stores across its engines, connect the clients, and run a node or a cluster without the mistakes that succeed quietly.",
+  "author": { "name": "boogvar" },
+  "homepage": "https://docs.tessaridb.com",
+  "repository": "https://github.com/tessaridb/tessaridb-agent-plugins",
+  "license": "Apache-2.0",
+  "keywords": ["tessaridb", "tessariql", "database", "search", "vector"],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "TessariDB",
+    "shortDescription": "Write TessariQL and run TessariDB correctly",
+    "developerName": "TessariDB",
+    "category": "Coding",
+    "websiteURL": "https://tessaridb.com",
+    "defaultPrompt": [
+      "Design the tables and indexes for this feature",
+      "Add full-text search over these documents",
+      "Why did this TessariQL query return nothing?"
+    ]
+  }
+}

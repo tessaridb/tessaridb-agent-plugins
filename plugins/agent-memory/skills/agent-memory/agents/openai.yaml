@@ -1,0 +1,13 @@
+interface:
+  display_name: "TessariDB Agent Memory"
+  short_description: "Keep what you learn across sessions and agents"
+  brand_color: "#2563EB"
+  default_prompt: "Use $agent-memory to recall what earlier sessions learned about this project."
+
+dependencies:
+  tools:
+    - type: "mcp"
+      value: "tessaridb-am"
+      description: "TessariDB Agent Memory server, run locally from the published container"
+      transport: "streamable_http"
+      url: "http://127.0.0.1:39142/mcp"

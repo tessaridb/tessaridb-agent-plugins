@@ -1,0 +1,5 @@
+interface:
+  display_name: "TessariDB"
+  short_description: "Write TessariQL and run TessariDB correctly"
+  brand_color: "#2563EB"
+  default_prompt: "Use $tessaridb to design the tables and indexes for this feature."

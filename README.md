@@ -2,7 +2,10 @@
 
 Plugins that let an agent work with [TessariDB](https://tessaridb.com).
 
-This repository is the **marketplace** and the plugins themselves. Installing a plugin from here
+This repository is the **marketplace** and the plugins themselves, for **Claude Code** and for
+**Codex**: each plugin carries a manifest for both (`.claude-plugin/` and `.codex-plugin/`) and the
+same skills, and each host has its own marketplace file (`.claude-plugin/marketplace.json` and
+`.agents/plugins/marketplace.json`). Installing a plugin from here
 clones this repository and nothing else: a plugin never drags a product's source tree along behind
 it, and that stays true whether the product is public or not.
 
@@ -13,15 +16,31 @@ section at the end shows both forms.
 
 | Plugin | What it does |
 |---|---|
-| `tessaridb-agent-memory` | Memory for an agent, stored in TessariDB: registers the memory server and carries a skill that says when to reach for it and what a round trip looks like. |
+| `tessaridb` | Working with TessariDB itself: a skill covering TessariQL, every engine (full text, vectors, geometry, graphs, key-value, queues, topics, time series, vaults), transactions and history, the five clients, and running a node or a cluster. No server; nothing to start. |
+| `tessaridb-agent-memory` | Memory for an agent, stored in TessariDB: registers the memory server and carries a skill that says when to reach for it, which tool fits which job, and how goals, tasks, checklists and releases are tracked. |
+
+The skills are plain Markdown: a `SKILL.md` that says when to use it and what to read, and a
+`references/` folder with the detail. Every TessariQL example in the `tessaridb` skill is run
+against the TessariDB release the skill names.
 
 ## Install
 
 Add the marketplace, then install what you want from it:
 
+In **Claude Code**:
+
 ```shell
 /plugin marketplace add tessaridb/tessaridb-agent-plugins
+/plugin install tessaridb@tessaridb
 /plugin install tessaridb-agent-memory@tessaridb
+```
+
+In **Codex**:
+
+```shell
+codex plugin marketplace add tessaridb/tessaridb-agent-plugins
+codex plugin add tessaridb@tessaridb
+codex plugin add tessaridb-agent-memory@tessaridb
 ```
 
 To keep a local copy current after a plugin is updated:
@@ -77,9 +96,11 @@ docker run -d --name agent-memory --restart unless-stopped --stop-timeout 30 \
 and the memory service together, and the named volume keeps the store across restarts and
 upgrades. `--stop-timeout 30` gives `docker stop` the time it needs to close the store cleanly.
 
-Then, in Claude Code, `/mcp` → `tessaridb-am` → **Authenticate** opens the browser; sign in as
-the owner with the passphrase and approve. The browser returns to `127.0.0.1:39143`, so that port
-has to be free while you sign in.
+Then authorize the client once. In Claude Code, `/mcp` → `tessaridb-am` → **Authenticate**; the
+browser returns to `127.0.0.1:39143`. In Codex, `codex mcp login tessaridb-am`; the browser
+returns to `127.0.0.1:39144`. Either way you sign in as the owner with the passphrase and approve,
+and the port has to be free while you do. Codex needs a memory service from `0.3.0-alpha` on, which knows
+the `codex` client.
 
 The address is fixed: the plugin expects port **39142** on the local machine. If the container
 publishes a different port, register the server yourself instead of through the plugin:

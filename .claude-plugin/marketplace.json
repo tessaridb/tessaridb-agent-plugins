@@ -1,7 +1,7 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "tessaridb",
-  "description": "Plugins that let an agent work with TessariDB. The first is the agent memory that keeps what a session learns; others will sit beside it.",
+  "description": "Plugins that let an agent work with TessariDB: the database itself, and the agent memory that keeps what a session learns.",
   "owner": {
     "name": "boogvar"
   },
@@ -13,8 +13,18 @@
         "name": "boogvar"
       },
       "category": "productivity",
-      "version": "0.0.2",
+      "version": "0.1.0",
       "source": "./plugins/agent-memory"
+    },
+    {
+      "name": "tessaridb",
+      "description": "Work with TessariDB: write TessariQL, design stores across its engines, connect the clients, and run a node or a cluster without the mistakes that succeed quietly.",
+      "author": {
+        "name": "boogvar"
+      },
+      "category": "development",
+      "version": "0.1.0",
+      "source": "./plugins/tessaridb"
     }
   ]
 }
