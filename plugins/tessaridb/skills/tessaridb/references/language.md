@@ -130,12 +130,23 @@ DELETE FROM users WHERE age < 18 LIMIT 1;
 DELETE FROM users WHERE age < 18 LIMIT ALL;
 ```
 
-A conditional delete or update must say how far it reaches:
+A conditional delete must say how far it reaches:
 
 ```tessariql
 -- refused: Unbounded
 DELETE FROM users WHERE age < 18;
 ```
+
+`UPDATE` always names one record. There is no table-wide `UPDATE … WHERE`: to change many records,
+read their ids and update each one, inside one transaction if they must change together.
+
+```tessariql
+-- refused: UnexpectedToken
+UPDATE users SET age = 0;
+```
+
+A `WHERE` on an `UPDATE` of one record is a compare-and-set: `UPDATE users:1 SET age = 37 WHERE age = 36`
+refuses, and discards the transaction, when the condition is false.
 
 ## Reading
 
