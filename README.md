@@ -17,7 +17,7 @@ section at the end shows both forms.
 | Plugin | What it does |
 |---|---|
 | `tessaridb` | Working with TessariDB itself: a skill covering TessariQL, every engine (full text, vectors, geometry, graphs, key-value, queues, topics, time series, vaults), transactions and history, the five clients, and running a node or a cluster. No server; nothing to start. |
-| `tessaridb-agent-memory` | Memory for an agent, stored in TessariDB: registers the memory server and carries a skill that says when to reach for it, which tool fits which job, and how goals, tasks, checklists and releases are tracked. |
+| `tessaridb-agent-memory` | Memory for an agent, stored in TessariDB: registers the memory server and carries a skill that says when to reach for it, which tool fits which job, and how goals, tasks, checklists and releases are tracked. In Claude Code, a hook puts the session's `status` back into the context after every compaction — the memory session lives on the connection and survives it. |
 
 The skills are plain Markdown: a `SKILL.md` that says when to use it and what to read, and a
 `references/` folder with the detail. Every TessariQL example in the `tessaridb` skill is run

@@ -57,8 +57,13 @@ session_start { agent: "claude-code", path: "/work/acme",
                 declare: { kind: "group", subprojects: ["api", "web"] } }
 ```
 
-Every other tool is refused until a session exists. After your client's context is compacted or
-restarted, you are a new session as far as the service is concerned, so start one again.
+Every other tool is refused until a session exists. The session belongs to the connection, not to
+your context: a compaction rewrites what you remember and leaves the connection, and the session on
+it, exactly as they were. So after a compaction call `status` with width `me` (the plugin does it
+for you) and carry on in the same session. Call `session_start` again only when a tool is refused
+because the connection has no session: after the client restarts, or after the connection sat idle
+long enough to be dropped. A second `session_start` on a live connection opens a NEW session and
+leaves the first one holding its claims until it times out.
 
 ## Three ways to write
 

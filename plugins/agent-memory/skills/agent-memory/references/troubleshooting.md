@@ -28,8 +28,12 @@ is renewed by the client. If sign-in keeps failing, tell the person rather than 
 
 ## Refused before anything happened: no session
 
-Every tool except `session_start` is refused until a session exists. After a context compaction or
-a client restart, call `session_start` again. To the service you are a new session.
+Every tool except `session_start` is refused until a session exists on the connection. A context
+compaction does not end it: the session lives on the MCP connection, which outlives the compaction,
+so after a compaction you are still the same session. The refusal happens after a client restart
+(a new connection) or when the connection sat idle for longer than the service keeps it, and then
+`session_start` is the answer. Don't call it when the session is still there: a second one replaces
+the first on the connection, and the first keeps its claims until it times out.
 
 ## Refused: the folder is not declared
 

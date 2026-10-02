@@ -13,7 +13,7 @@
         "name": "boogvar"
       },
       "category": "productivity",
-      "version": "0.1.1",
+      "version": "0.1.2",
       "source": "./plugins/agent-memory"
     },
     {

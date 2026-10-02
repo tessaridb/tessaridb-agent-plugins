@@ -1,0 +1,19 @@
+{
+  "description": "After a context compaction, put what this session was doing back into the context: the memory session lives on the MCP connection and outlives the compaction, so `status` answers for it; with no session on the connection the refusal says to call `session_start`.",
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "compact",
+        "hooks": [
+          {
+            "type": "mcp_tool",
+            "server": "plugin:tessaridb-agent-memory:tessaridb-am",
+            "tool": "status",
+            "input": { "width": "me" },
+            "timeout": 30
+          }
+        ]
+      }
+    ]
+  }
+}

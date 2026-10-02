@@ -1,6 +1,6 @@
 {
   "name": "tessaridb-agent-memory",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Agent memory on TessariDB: stand the store and the memory service up locally, register the memory server, and carry the skill that says how to use it.",
   "author": {
     "name": "boogvar"
@@ -12,5 +12,6 @@
     "tessaridb",
     "mcp"
   ],
-  "mcpServers": "./mcp/claude.json"
+  "mcpServers": "./mcp/claude.json",
+  "hooks": "./hooks/claude.json"
 }
