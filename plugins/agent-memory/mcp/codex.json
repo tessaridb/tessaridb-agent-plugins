@@ -5,7 +5,8 @@
       "url": "http://127.0.0.1:39142/mcp",
       "oauth": {
         "clientId": "codex",
-        "callbackUrl": "http://127.0.0.1:39144/callback"
+        "callbackUrl": "http://127.0.0.1:39144/callback",
+        "callbackPort": 39144
       }
     }
   }

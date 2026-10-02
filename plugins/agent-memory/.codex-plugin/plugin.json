@@ -1,6 +1,6 @@
 {
   "name": "tessaridb-agent-memory",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Agent memory on TessariDB: registers the memory server and carries the skill that says how to use it.",
   "author": {
     "name": "boogvar"

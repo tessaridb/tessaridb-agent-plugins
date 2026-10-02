@@ -49,6 +49,13 @@ To keep a local copy current after a plugin is updated:
 /plugin marketplace update
 ```
 
+In Codex:
+
+```shell
+codex plugin marketplace upgrade
+codex plugin add tessaridb-agent-memory@tessaridb
+```
+
 ## For a whole project
 
 Put it in the repository's `.claude/settings.json` and everyone who trusts the folder gets it
@@ -101,6 +108,11 @@ browser returns to `127.0.0.1:39143`. In Codex, `codex mcp login tessaridb-am`; 
 returns to `127.0.0.1:39144`. Either way you sign in as the owner with the passphrase and approve,
 and the port has to be free while you do. Codex needs a memory service from `0.3.0-alpha` on, which knows
 the `codex` client.
+
+If the browser lands on a page that will not open after you approve in Codex, the plugin is older
+than `0.1.1`: it told Codex where to send you back but not which port to wait on, so Codex waited on
+a random one. Update the plugin as above, or sign in once with
+`codex -c mcp_oauth_callback_port=39144 mcp login tessaridb-am`.
 
 The address is fixed: the plugin expects port **39142** on the local machine. If the container
 publishes a different port, register the server yourself instead of through the plugin:
