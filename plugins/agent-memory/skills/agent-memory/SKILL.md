@@ -59,11 +59,27 @@ session_start { agent: "claude-code", path: "/work/acme",
 
 Every other tool is refused until a session exists. The session belongs to the connection, not to
 your context: a compaction rewrites what you remember and leaves the connection, and the session on
-it, exactly as they were. So after a compaction call `status` with width `me` (the plugin does it
+it, exactly as they were. So after a compaction call `status` with width "me" (the plugin does it
 for you) and carry on in the same session. Call `session_start` again only when a tool is refused
 because the connection has no session: after the client restarts, or after the connection sat idle
-long enough to be dropped. A second `session_start` on a live connection opens a NEW session and
-leaves the first one holding its claims until it times out.
+long enough to be dropped. On a memory service older than `0.3.1-alpha`, a
+second `session_start` on a live connection opens a NEW session and leaves the first one holding its
+claims until it times out; from `0.3.1-alpha` on it hands you back the session you already hold.
+
+### Before a compaction, write down where you are
+
+Your context is about to be summarised and most of it lost. Write what you need to carry on as an
+artifact of kind "snapshot" — the task, the plan and the step you are on, what is decided, what is
+open, the exact next step:
+
+```
+item_add { item: { family: "artifact", kind: "snapshot",
+                   title: "context before compaction", body: "<the snapshot>" } }
+```
+
+After the compaction the plugin's hook asks `status` for you, and from `0.3.1-alpha` on the
+answer carries that snapshot with its text ("snapshot"): yours from this session,
+or the newest of your earlier sessions in this project. Read it before doing anything else.
 
 ## Three ways to write
 
