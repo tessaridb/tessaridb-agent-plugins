@@ -12,9 +12,14 @@ is not promised to open under the next, so take a backup and test on a copy befo
 
 - `tessaridb ./data --health` exits non-zero when the store is not well.
 - `--tls-cert` and `--tls-key` make both ports speak TLS 1.3 and nothing else; the files are
-  re-read when they change, so a renewed certificate needs no restart. Without them a single node
-  serves in the clear and says so at start; a cluster node refuses to start that way unless
-  `--client-plaintext` is given.
+  re-read when they change, so a renewed certificate needs no restart. Without them any node
+  (single or in a cluster) serves in the clear and says so at start, naming whether it is reachable beyond this machine;
+  `INFO FOR NODE` reports `clients: { tls, required }`. `--require-client-tls` (or
+  `TESSARIDB_REQUIRE_CLIENT_TLS=1`) makes a node refuse to start without a certificate.
+  `--client-plaintext` is retired: accepted in 0.23.0-beta with a notice, refused after.
+- A browser warns about any certificate from your own authority. For the console use `localhost`
+  or an SSH tunnel, a publicly trusted (ACME) certificate, or a TLS proxy in front of the HTTP
+  port with the node's HTTP bound to loopback.
 - `--encryption-key-file` (32 bytes, readable only by its owner) encrypts the store at rest and
   seals every backup it writes. A store opens only the way it was created, and a lost key is a lost
   store.
