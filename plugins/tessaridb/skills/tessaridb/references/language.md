@@ -26,6 +26,8 @@ them.
 | `DEFINE TABLE t (…) SCHEMALESS` | declared fields are checked, any others are accepted |
 | `DEFINE COLLECTION t` | accepts any document; add typed fields with `DEFINE FIELD` |
 | `DEFINE TABLE t EDGE` | an edge table for links between records (see engines.md) |
+| `DEFINE VIEW v AS SELECT …` | a name for a read; holds nothing and runs with the caller's permissions |
+| `DEFINE VIEW v MATERIALIZED AS SELECT …` | keeps the read's answer as records, brought current from the source's changes after each commit |
 | `DEFINE VECTOR`, `DEFINE GEO`, `DEFINE GRAPH`, `DEFINE SPACE`, `DEFINE QUEUE`, `DEFINE TOPIC`, `DEFINE SERIES`, `DEFINE VAULT`, `DEFINE BUCKET` | the other engines (see engines.md) |
 
 A kind can't be changed after the fact; drop and redefine instead. A `DEFINE TABLE` with no
@@ -148,6 +150,26 @@ UPDATE users SET age = 0;
 A `WHERE` on an `UPDATE` of one record is a compare-and-set: `UPDATE users:1 SET age = 37 WHERE age = 36`
 refuses, and discards the transaction, when the condition is false.
 
+### Events: statements that run with a write
+
+```tessariql
+DEFINE COLLECTION audit;
+CREATE users:'kate' = { name: 'kate', email: 'kate@example.com', age: 30 };
+DEFINE EVENT log_age ON users FOR UPDATE WHEN $after.age != $before.age THEN
+    CREATE audit = { who: $id, was: $before.age ?? 0, now: $after.age ?? 0 };
+UPDATE users:'kate' SET age = 31;
+SELECT who, was, now FROM audit;
+```
+
+An event runs after each `CREATE`, `UPDATE` or `DELETE` of a record of its table, **inside the
+writer's transaction and as the writer**: its writes land with the write or not at all, and a
+refusal in its body (a `THROW` included) refuses the write as `EventFailed`. `$event`, `$before`,
+`$after` and `$id` are bound; `$after.age` reaches into the record, and a step that reaches nothing
+is `NONE`. A body writes; it cannot read, define, `USE` or open a transaction. A chain more than 16
+events deep is refused, so a body that updates its own record needs a `WHEN` that excludes its own
+change. Work after the commit (an email, a call) is a message the body appends to a topic, read by a
+consumer.
+
 ## Reading
 
 ```tessariql
@@ -224,7 +246,9 @@ SELECT * FROM users WHERE email = 'ada@example.com' USING INDEX by_email;
 SELECT * FROM users TIMEOUT 2s;
 ```
 
-- `EXPLAIN` gives the plan without running the read.
+- `EXPLAIN` gives the plan without running the read, and the number of records the planner expects
+  (`estimate`). `ANALYZE TABLE t` takes the per-index statistics it estimates from; a serving node
+  also refreshes them itself. An estimate chooses a path, never the records.
 - `USING INDEX name` turns "I expect this index to be used" into an assertion: if the read can't
   use it, it is refused rather than quietly scanning.
 - `TIMEOUT` refuses a read that runs too long, rather than returning part of the answer.

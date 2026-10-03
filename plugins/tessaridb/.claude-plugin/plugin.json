@@ -1,6 +1,6 @@
 {
   "name": "tessaridb",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Work with TessariDB: write TessariQL, design stores across its engines, connect the clients, and run a node or a cluster without the mistakes that succeed quietly.",
   "author": { "name": "boogvar" },
   "homepage": "https://docs.tessaridb.com",

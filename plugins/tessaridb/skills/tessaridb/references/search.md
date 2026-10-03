@@ -19,8 +19,9 @@ SELECT * FROM notes WHERE body MATCHES 'programs';
 
 There are three filters: `lowercase`, `ascii` (folds `café` to `cafe`) and `stemmer` (English
 Porter2, so `programs` matches `program`). For other languages use `stemmer(russian)`,
-`stemmer(german)`, `stemmer(french)` or `stemmer(spanish)`. There is no n-gram filter: prefix,
-infix and fuzzy matching are query operators instead (below).
+`stemmer(german)`, `stemmer(french)` or `stemmer(spanish)`. There is no n-gram filter (naming one is
+refused, `NgramFilter`): prefix, infix and fuzzy matching are query operators instead (below). Chinese
+and Japanese text is split one ideograph or kana per token, so a quoted run of them matches exactly.
 
 **Order matters.** Write `lowercase, ascii, stemmer`. The stemmer leaves alone a word that still
 has a capital letter, so `stemmer, lowercase` quietly stems almost nothing, and searches just
@@ -45,8 +46,12 @@ SELECT * FROM notes WHERE body MATCHES FUZZY 'babbgae';
 
 - Several words are all required. Quotes make a phrase.
 - `OR` and `NOT` combine words. A trailing `*` makes a prefix of that one word.
-- `MATCHES PREFIX`, `INFIX` and `FUZZY` read every word of the query that way. `FUZZY` allows
-  small misspellings. Prefixes and infixes must be at least three characters (`PrefixTooShort`).
+- `MATCHES PREFIX`, `INFIX` and `FUZZY` read every word of the query that way. Prefixes and infixes
+  must be at least three characters (`PrefixTooShort`).
+- `FUZZY` allows no edit below three letters, one up to five and two beyond, and never in the first
+  two characters. A misspelling is measured against the word as the text held it, not only its stem,
+  so `trasnactoin` finds `transaction`. A `SEARCH` index built before 0.22.0-beta needs
+  `REBUILD INDEX` for that; until then a fuzzy read over it scans, with the same answers.
 - `MATCHES` works with or without an index. Without one, it scans and re-analyses each record.
 
 ## Scoring, ranking and highlighting

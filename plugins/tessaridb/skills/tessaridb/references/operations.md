@@ -11,7 +11,13 @@ keeps the store in `/var/lib/tessaridb`. Pin a released tag. Pre-1.0, a store wr
 is not promised to open under the next, so take a backup and test on a copy before upgrading.
 
 - `tessaridb ./data --health` exits non-zero when the store is not well.
-- Neither port terminates TLS: put a TLS proxy in front, or keep the node on a trusted network.
+- `--tls-cert` and `--tls-key` make both ports speak TLS 1.3 and nothing else; the files are
+  re-read when they change, so a renewed certificate needs no restart. Without them a single node
+  serves in the clear and says so at start; a cluster node refuses to start that way unless
+  `--client-plaintext` is given.
+- `--encryption-key-file` (32 bytes, readable only by its owner) encrypts the store at rest and
+  seals every backup it writes. A store opens only the way it was created, and a lost key is a lost
+  store.
 
 ## Backups
 
@@ -86,6 +92,12 @@ A cluster starts when the catalog names a peer. Then:
   changes, with nothing in an error state.
 - Start each node with all five cluster options together (`--cluster-credential`, `--cluster-key`,
   `--cluster-authority`, `--cluster-address`, `--seed`) or none of them.
+- Peers always speak mutual TLS with a certificate issued for each node's id. A joining node is
+  approved by its id, its certificate's fingerprint or a one-time join token, and
+  `REVOKE CERTIFICATE '<sha256>'` cuts a peer off, open links included.
+- A namespace kept on more than one node answers a write once a majority of its voters hold it
+  (`ACKNOWLEDGE MAJORITY`, the default). A refusal saying the write **is** committed but not
+  confirmed in time (`NotAcknowledgedInTime`) must not be retried as if nothing happened.
 - Read `INFO FOR NODE` on every machine: its lease, epoch, followers and subscriptions.
 - Writes go to the leader of the range they touch. Reads can say how stale they may be
   (`STALENESS`), or demand the leader (`ANSWERED BY LEADER`). Both choose which nodes may answer;

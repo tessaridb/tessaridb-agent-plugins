@@ -11,7 +11,12 @@
 | Kotlin / JVM | `com.tessaridb:tessaridb-client` | from its repository, `github.com/tessaridb/tessaridb-sdk-kotlin` |
 
 All are Apache-2.0, written from the protocol specification alone, and checked against the same
-conformance corpus. Version 0.7.0 of each speaks protocol 1.2 and follows a cluster's redirects.
+conformance corpus. Version 0.8.0 of each speaks protocol 1.2, follows a cluster's redirects, and
+speaks TLS 1.3 to a node given a certificate. Each checks the certificate chain and the host name,
+has no option to skip that check, and never falls back to the clear after a failed handshake. Trust
+comes from a PEM authority or the system store: Rust `Tls::trusting_pem`, Python
+`tessaridb.tls_context("ca.pem")` passed as `tls=`, TypeScript `connect({ …, tls: { ca } })`, Go
+`TrustPEM` with `DialTLS`, Kotlin `Trust.fromPem`. The prompt takes `--tls-authority ca.pem`.
 The node's major protocol version must match the client's.
 
 ## Connecting and asking

@@ -9,7 +9,7 @@ TessariDB is one database with several engines: documents and tables, full-text 
 vectors, geometry, graphs, key-value spaces, files, queues, topics, time series and vaults. Each is
 reached through one language, **TessariQL**, and one transaction can write across all of them.
 
-This skill was checked against **TessariDB 0.20.1-beta**. The language, the wire format and the
+This skill was checked against **TessariDB 0.22.0-beta**. The language, the wire format and the
 on-disk format can still change before 1.0. When behaviour matters, say which version you checked
 it on. The published documentation at <https://docs.tessaridb.com> is the reference; when this
 skill and the site disagree, the site wins.
@@ -33,7 +33,7 @@ Read the one that matches the task:
 docker run -d --name tessaridb -p 9080:9080 -p 8000:8000 \
   -v tessaridb-data:/var/lib/tessaridb \
   -e TESSARIDB_INITIAL_USER=owner -e TESSARIDB_INITIAL_PASSWORD='choose-a-real-one' \
-  tessaridb/tessaridb:0.20.1-beta
+  tessaridb/tessaridb:0.22.0-beta
 ```
 
 Port 9080 is the wire protocol that clients use. Port 8000 is HTTP and serves a web console at `/`.
@@ -89,7 +89,13 @@ the answer is wrong. Each rule below prevents one of them.
 10. **A store with no users is open.** Until the first `DEFINE USER`, anyone who can reach the port
     can read and write everything. Declare an owner first (the container's
     `TESSARIDB_INITIAL_USER` does this).
-11. **Neither port terminates TLS.** Run the node on a trusted network or behind a proxy that does.
+11. **A node speaks TLS only when given a certificate.** With `--tls-cert`/`--tls-key` both ports
+    speak TLS 1.3 and nothing else; without them a single node serves in the clear and says so at
+    start, and a cluster node refuses to start unless `--client-plaintext` chooses that. Every client
+    verifies the certificate and has no switch to stop checking.
+12. **An event runs inside the writer's transaction.** `DEFINE EVENT … THEN …` lands with the write
+    or not at all, and a refusal in its body refuses the write. Work that must happen after the
+    commit, like an email, goes into a topic the body appends to.
 
 ## How to check what a statement did
 

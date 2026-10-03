@@ -43,7 +43,19 @@ INFO FOR VECTOR embeddings;
 
 - `EFFORT` tunes that one read. Recall is measured by `REBUILD INDEX`, and `INFO FOR VECTOR` reports
   it. It reports `NONE` when nobody has measured. Never quote a recall figure nobody measured.
-- Filter first, then rank: `SELECT … WHERE live = true ORDER BY vector::cosine(…) LIMIT k`.
+- Filter first, then rank: `SELECT … WHERE live = true ORDER BY vector::cosine(…) LIMIT k`. With
+  `APPROXIMATE` the graph serves that read too: it tests the whole condition on every record it
+  admits, and when it cannot fill the page it hands the read to the exact path (a `fell-back` note)
+  rather than answering short.
+- `QUANTIZED` keeps one byte per component in the index and re-ranks the candidates on the full
+  vectors: about a fifth of the bytes for a few points of recall. Measure recall after choosing it.
+
+```tessariql
+DEFINE VECTOR compact DIMENSION 3 DISTANCE euclidean QUANTIZED;
+CREATE compact:'a' = { vector: [0.1, 0.2, 0.3] };
+SELECT id FROM compact ORDER BY vector::euclidean(vector, [0.1, 0.2, 0.3]) LIMIT 1 APPROXIMATE;
+```
+
 - To combine vector similarity with text relevance, use `ORDER BY FUSE (…)`, never a sum.
 
 ## Geometry
@@ -101,6 +113,14 @@ SELECT * FROM users:1->follows->users;
 `->` follows links out and `<-` follows them in. Chains such as `a->x->b->y->c` walk several hops,
 and `DEPTH n` repeats one hop up to n times.
 
+`PATH TO` answers one path through a declared graph, start to end, with a `path` note giving its
+steps and cost. `DEPTH` is required, and `WEIGHT field` makes it the cheapest path within that many
+steps:
+
+```tessariql
+SELECT name FROM social:1->knows->social PATH TO social:3 DEPTH 3;
+```
+
 ## Key-value spaces
 
 ```tessariql
@@ -151,6 +171,17 @@ job (`DELETE jobs:<id>`), and one that gives up calls `RELEASE jobs:<id>`. A hol
 returns the job to the queue, and `attempts` counts how often it has been handed out. `TIMEOUT` is
 required: how long a job may take is your decision, not the store's.
 
+`PRIORITY BY f` hands out the greatest `f` first (ties in arrival order), and `NOT BEFORE g` holds a
+record back until the instant in `g`:
+
+```tessariql
+DEFINE QUEUE alerts TIMEOUT 1m PRIORITY BY severity;
+CREATE alerts = { severity: 2, text: 'disk at 80%' };
+CREATE alerts = { severity: 9, text: 'disk full' };
+CLAIM FROM alerts;
+DEFINE QUEUE mail TIMEOUT 5m NOT BEFORE send_at;
+```
+
 ## Topics
 
 ```tessariql
@@ -174,6 +205,10 @@ COMMIT;
 
 For worker pools, `DEFINE GROUP 'mailer' ON TOPIC events ACK DEADLINE 30s` gives per-message `ACK`
 and `NACK`, redelivery, a delivery limit and `DEAD LETTER TO <topic>`.
+
+`RETAIN 7d` keeps messages for a time and `RETAIN BYTES n` keeps at most n bytes of them; an append
+past the limit removes the oldest in the same commit. A reader that missed removed messages gets a
+`lapsed` note once, saying how many.
 
 ## Time series
 
