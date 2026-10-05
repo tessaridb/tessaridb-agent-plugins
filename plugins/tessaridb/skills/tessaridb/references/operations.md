@@ -7,8 +7,12 @@ tessaridb ./data --serve 0.0.0.0:9080 --http 0.0.0.0:8000
 ```
 
 Or the container (`tessaridb/tessaridb:<version>`, amd64 and arm64), which serves both ports and
-keeps the store in `/var/lib/tessaridb`. Pin a released tag. Pre-1.0, a store written by one version
-is not promised to open under the next, so take a backup and test on a copy before upgrading.
+keeps the store in `/var/lib/tessaridb`. Pin a released tag. A store written by 0.22.0-beta or later opens
+under a newer release; going back is not promised, so take a backup before upgrading. A newer
+release keeps the store's format so the previous one can still open it, until
+`ALTER STORE FINALIZE FORMAT` raises it for good; `INFO FOR STORE` shows `format` and `writes`.
+Finalize only when no older build will open the store again. A store that could not make a write
+durable stops taking writes (`Stopped`) until it is reopened; reads still answer.
 
 - `tessaridb ./data --health` exits non-zero when the store is not well.
 - `--tls-cert` and `--tls-key` make both ports speak TLS 1.3 and nothing else; the files are
@@ -16,7 +20,8 @@ is not promised to open under the next, so take a backup and test on a copy befo
   (single or in a cluster) serves in the clear and says so at start, naming whether it is reachable beyond this machine;
   `INFO FOR NODE` reports `clients: { tls, required }`. `--require-client-tls` (or
   `TESSARIDB_REQUIRE_CLIENT_TLS=1`) makes a node refuse to start without a certificate.
-  `--client-plaintext` is retired: accepted in 0.23.0-beta with a notice, refused after.
+  `--client-plaintext` is refused at start (since 0.24.0-beta). A `--tls-key` or `--cluster-key`
+  file anyone else may read stops the node at start: `chmod 600` it.
 - A browser warns about any certificate from your own authority. For the console use `localhost`
   or an SSH tunnel, a publicly trusted (ACME) certificate, or a TLS proxy in front of the HTTP
   port with the node's HTTP bound to loopback.
@@ -107,8 +112,17 @@ A cluster starts when the catalog names a peer. Then:
 - Writes go to the leader of the range they touch. Reads can say how stale they may be
   (`STALENESS`), or demand the leader (`ANSWERED BY LEADER`). Both choose which nodes may answer;
   neither marks the answer.
-- Tables can be split by key range (`SPLIT AT`), with a leader per range (`LEADS`). A transaction
-  that writes ranges led by two different nodes is refused (`SpansLeaderships`).
+- Tables can be split by key range (`SPLIT AT`), with a leader per range (`LEADS`). Generated uuids
+  are time-ordered, so new records land in the last shard unless the table says
+  `IDENTITY uuid SPREAD`. `ALTER TABLE … SPLIT AUTOMATICALLY ABOVE n RECORDS MERGE BELOW m RECORDS`
+  lets the store split and merge shards itself.
+- A transaction that writes ranges led by two different nodes is refused (`SpansLeaderships`)
+  unless it commits `ACROSS LEADERS`, which costs several times one write. An `AcrossInDoubt`
+  answer means read the records back; it is neither committed nor aborted until you look.
+- `ACKNOWLEDGE LOCAL MAJORITY` waits only for voters in the leader's `REGION`; it does not survive
+  a failover the way `MAJORITY` does.
+- Upgrade a cluster one minor version at a time, followers first and the leader last, and turn on
+  new features only after the last node runs the new release.
 - `MULTI MASTER` gives up single-copy semantics. Use it only when you can say what happens when two
   nodes write one record without seeing each other. Choose `REFUSE CONFLICTS` to handle that in
   your application, or `LAST WRITER WINS` only if someone will watch its conflict counter.

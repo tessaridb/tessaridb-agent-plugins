@@ -11,7 +11,8 @@
 | Kotlin / JVM | `com.tessaridb:tessaridb-client` | from its repository, `github.com/tessaridb/tessaridb-sdk-kotlin` |
 
 All are Apache-2.0, written from the protocol specification alone, and checked against the same
-conformance corpus. Version 0.8.0 of each speaks protocol 1.2, follows a cluster's redirects, and
+conformance corpus. Version 0.9.0 of each speaks protocol 1.3, follows a cluster's redirects, exposes a refusal's class,
+and
 speaks TLS 1.3 to a node given a certificate. Each checks the certificate chain and the host name,
 has no option to skip that check, and never falls back to the clear after a failed handshake. Trust
 comes from a PEM authority or the system store: Rust `Tls::trusting_pem`, Python
@@ -62,8 +63,12 @@ outcome per statement. The last outcome is usually the one you want.
   them as different values.
 - **Read the notes.** A reply's outcome carries notes, for example "a comparison skipped records of
   another kind" or "a source hit its ceiling". Log or surface them; never drop them.
-- **Retry only `CommitContention` and `Conflict`.** Branch on the error class or status the client
-  gives you, not on text parsed from a message. The refusal names are not on the wire.
+- **Branch on the refusal's class.** Every refusal carries one of nine classes: `invalid`,
+  `unauthenticated`, `forbidden`, `throttled`, `elsewhere`, `retry`, `conflict`, `unavailable`,
+  `internal`. Over HTTP it is the body's `code` and the status follows it; over the wire it is one
+  byte at protocol 1.3. Retry only `retry`. `retry` and `conflict` are both HTTP `409`, so branch on
+  the class rather than the number, and never on text parsed from a message: refusal names are not
+  on the wire.
 - **Following changes takes the connection.** A subscription (change feed) consumes the connection
   it runs on, so open a second connection for queries. Resume from the last sequence you handled
   **plus one**.

@@ -52,6 +52,9 @@ SELECT * FROM notes WHERE body MATCHES FUZZY 'babbgae';
   two characters. A misspelling is measured against the word as the text held it, not only its stem,
   so `trasnactoin` finds `transaction`. A `SEARCH` index built before 0.22.0-beta needs
   `REBUILD INDEX` for that; until then a fuzzy read over it scans, with the same answers.
+- After upgrading to 0.26.0-beta or later, rebuild every full-text index once (`REBUILD INDEX`, or
+  redefine a `DEFINE SEARCH`). An index built by an older tokenizer is not used until then: reads
+  scan, and a search carries a `needs-rebuild` note. `search::score` now scores fuzzy matches.
 - `MATCHES` works with or without an index. Without one, it scans and re-analyses each record.
 
 ## Scoring, ranking and highlighting

@@ -9,8 +9,9 @@ TessariDB is one database with several engines: documents and tables, full-text 
 vectors, geometry, graphs, key-value spaces, files, queues, topics, time series and vaults. Each is
 reached through one language, **TessariQL**, and one transaction can write across all of them.
 
-This skill was checked against **TessariDB 0.23.0-beta**. The language, the wire format and the
-on-disk format can still change before 1.0. When behaviour matters, say which version you checked
+This skill was checked against **TessariDB 0.31.0-beta**. The language and the wire format can still
+change before 1.0. The on-disk format holds: a store written by 0.22.0-beta or later opens under a
+newer release, but going back to an older one is not promised. When behaviour matters, say which version you checked
 it on. The published documentation at <https://docs.tessaridb.com> is the reference; when this
 skill and the site disagree, the site wins.
 
@@ -33,7 +34,7 @@ Read the one that matches the task:
 docker run -d --name tessaridb -p 9080:9080 -p 8000:8000 \
   -v tessaridb-data:/var/lib/tessaridb \
   -e TESSARIDB_INITIAL_USER=owner -e TESSARIDB_INITIAL_PASSWORD='choose-a-real-one' \
-  tessaridb/tessaridb:0.23.0-beta
+  tessaridb/tessaridb:0.31.0-beta
 ```
 
 Port 9080 is the wire protocol that clients use. Port 8000 is HTTP and serves a web console at `/`.
@@ -84,8 +85,9 @@ the answer is wrong. Each rule below prevents one of them.
    a vector read is exact unless it says `APPROXIMATE`.
 8. **A script is not a transaction.** A file runs statement by statement and stops at the first
    refusal, keeping everything before it. Wrap all-or-nothing work in `BEGIN … COMMIT`.
-9. **Contention is reported, not waited out.** `CommitContention` and `Conflict` are the two
-   refusals that mean "try again". Retry those explicitly and nothing else.
+9. **Contention is reported, not waited out.** Every refusal carries a class, and only the class
+   `retry` means "try again" (`CommitContention`, `Conflict` and a few cluster refusals). Retry
+   those explicitly, with a bound, and nothing else.
 10. **A store with no users is open.** Until the first `DEFINE USER`, anyone who can reach the port
     can read and write everything. Declare an owner first (the container's
     `TESSARIDB_INITIAL_USER` does this).
@@ -93,7 +95,8 @@ the answer is wrong. Each rule below prevents one of them.
     speak TLS 1.3 and nothing else; without them any node, single or in a cluster, serves in the
     clear and says so at start. `--require-client-tls` (or `TESSARIDB_REQUIRE_CLIENT_TLS=1`) makes it
     refuse to start instead. Nodes always talk to each other over mutual TLS. Every client verifies
-    the certificate and has no switch to stop checking.
+    the certificate and has no switch to stop checking. Key files must be readable by their owner
+    alone (`chmod 600`), or the node refuses to start.
 12. **An event runs inside the writer's transaction.** `DEFINE EVENT … THEN …` lands with the write
     or not at all, and a refusal in its body refuses the write. Work that must happen after the
     commit, like an email, goes into a topic the body appends to.

@@ -73,7 +73,8 @@ FROM places ORDER BY metres LIMIT 1;
 - Coordinates are GeoJSON order: `[longitude, latitude]`. Getting it backwards produces valid,
   wrong answers.
 - Seven geometry types (Point, LineString, Polygon and their Multi forms, GeometryCollection).
-  Distances are in **metres** on the sphere, not degrees.
+  Distances are in **metres** on the sphere, not degrees. `geo::distance` measures between any two
+  shapes, to their nearest points.
 - Predicates: `geo::intersects`, `geo::within`, `geo::covered_by`, `geo::contains`, `geo::covers`,
   `geo::touches`, `geo::equals`, `geo::disjoint`. `within` excludes the boundary and `covered_by`
   includes it, so choose deliberately.

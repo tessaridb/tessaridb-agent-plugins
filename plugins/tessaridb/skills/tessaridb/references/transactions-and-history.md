@@ -25,8 +25,10 @@ COMMIT;
 - Isolation is snapshot isolation; the database is the unit a transaction spans.
 - A transaction left open when the script or connection ends is discarded.
 - Two transactions that write the same record are told so at commit (`CommitContention` /
-  `Conflict`). The store doesn't wait or retry for you. Retry those two refusals explicitly, with
-  a bound, and treat every other refusal as final.
+  `Conflict`). The store doesn't wait or retry for you. Retry refusals of the class `retry`
+  explicitly, with a bound, and treat every other refusal as final.
+- On a cluster, a transaction over ranges two nodes lead must say `COMMIT ACROSS LEADERS`
+  (see operations.md).
 
 `THROW 'message'` refuses on purpose, inside a transaction to abandon it:
 

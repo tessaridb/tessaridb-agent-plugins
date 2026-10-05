@@ -181,6 +181,9 @@ SELECT count(*) AS n FROM users;
 SELECT city, count(*) AS n FROM users GROUP BY city;
 ```
 
+- `doc CONTAINS { customer: { city: 'Paris' } }` asks whether a document holds a sub-document, and
+  `DEFINE INDEX … FIELDS doc CONTAINS` serves it. `json::parse(text)` and `json::encode(value)`
+  convert between JSON text and documents.
 - Conditions use `=`, `!=`, `<`, `<=`, `>`, `>=`, `AND`, `OR`, `NOT`, `IN`, `CONTAINS`, `LIKE` and
   chained comparisons such as `1 < age < 100`.
 - `field = NONE` finds records without the field; `field = NULL` finds records where it is present
