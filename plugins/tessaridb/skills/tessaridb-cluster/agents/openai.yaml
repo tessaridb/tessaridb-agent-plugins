@@ -1,0 +1,5 @@
+interface:
+  display_name: "TessariDB Cluster"
+  short_description: "Stand up and run a TessariDB cluster"
+  brand_color: "#2563EB"
+  default_prompt: "Use $tessaridb-cluster to stand up a three-node cluster and rehearse a failover."

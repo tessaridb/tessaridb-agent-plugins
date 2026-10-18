@@ -1,0 +1,5 @@
+interface:
+  display_name: "TessariDB S3"
+  short_description: "Run TessariDB S3 and use it from any S3 tool"
+  brand_color: "#2563EB"
+  default_prompt: "Use $tessaridb-s3 to start the server and give this application its own access key."

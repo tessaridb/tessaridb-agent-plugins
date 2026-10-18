@@ -1,5 +1,7 @@
 # Full-text search
 
+Checked against TessariDB 0.36.1. Full detail: <https://docs.tessaridb.com/query-language/full-text-search>.
+
 Text becomes searchable in three steps: declare an **analyzer** (how text becomes terms), put it
 on a **field**, and add a **SEARCH index** on that field when you want speed and scores.
 
@@ -74,15 +76,37 @@ SELECT id, search::explain(body, 'first compiler') AS why FROM notes WHERE body 
 - Index options: `SEARCH POSITIONS OFFSETS` keeps what phrases and highlighting need to be served
   from the index; `SEARCH NO SCORE` keeps an index that only filters.
 
-**Never add scores from different fields or engines.** Two scores are on different scales. To combine
-rankings, use `ORDER BY FUSE`, which fuses by rank:
+- A ranked read with a `LIMIT` scores only what it must and stays exact: `EXPLAIN` shows
+  `access: 'ordered', shape: 'scored', exact: true`. Without a `LIMIT`, every record is scored.
+- `search::score` over a field with no `SEARCH` index is refused (`NoSearchIndex`), not answered
+  with a number that orders nothing.
+- A query term the collection doesn't hold gets a suggestion printed beside the answer
+  (`did you mean: hoppr -> hopper`). The suggestion is **never** run in its place.
+- `NOT` alone (`MATCHES 'NOT babbage'`) is refused: it names every record the index doesn't hold.
+
+**Weighting two text fields of one table** is ordinary arithmetic over their scores, each field
+with its own `SEARCH` index: `search::score(title, 'lock') * 3 + search::score(body, 'lock')`. A
+field the record doesn't match contributes `0`, so a weight never invents relevance.
+
+**Never add scores from different engines** (a text score, a vector distance, a distance in
+metres): they are on different scales and the one with the larger range decides alone. Combine
+them with `ORDER BY FUSE`, which ranks by each record's **place** in each order:
 
 ```tessariql
 DEFINE INDEX by_title ON notes FIELDS title SEARCH;
 SELECT id FROM notes
-ORDER BY FUSE (search::score(body, 'first'), search::score(title, 'compilers'))
+ORDER BY FUSE (search::score(body, 'first') DESC WEIGHT 2, search::score(title, 'compilers') DESC)
 LIMIT 3;
+SELECT id, search::ranks() AS ranks FROM notes
+ORDER BY FUSE (search::score(body, 'first') DESC, search::score(title, 'compilers') DESC) LIMIT 2;
 ```
+
+- Each branch is an order with its own direction. A record placed in a branch's first `DEPTH`
+  places (default 100) earns `weight / (60 + place)`; the fused order is the sum.
+- A record no branch placed is not in the answer, so a `LIMIT` can answer with fewer.
+- The `WHERE` applies to every branch, and a fused read is exact (`APPROXIMATE` is ignored there).
+- `search::ranks()` gives each branch's place for the record, `none` where it wasn't placed.
+- One branch alone, a zero weight, `GROUP BY` or an `AFTER` cursor beside `FUSE` is refused.
 
 ## One search over several fields and tables: `DEFINE SEARCH`
 

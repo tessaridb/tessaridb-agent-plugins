@@ -16,12 +16,25 @@ section at the end shows both forms.
 
 | Plugin | What it does |
 |---|---|
-| `tessaridb` | Working with TessariDB itself: a skill covering TessariQL, every engine (full text, vectors, geometry, graphs, key-value, queues, topics, time series, vaults), transactions and history, the five clients, and running a node or a cluster. No server; nothing to start. |
+| `tessaridb` | Working with TessariDB and its family: five skills, listed below. No server; nothing to start. |
 | `tessaridb-agent-memory` | Memory for an agent, stored in TessariDB: registers the memory server and carries a skill that says when to reach for it, which tool fits which job, and how goals, tasks, checklists and releases are tracked. In Claude Code, a hook puts the session's `status` back into the context after every compaction — the memory session lives on the connection and survives it. |
 
+The `tessaridb` plugin carries five skills. The agent picks one from what you ask; you can also name
+it (`/tessaridb:tessaridb-s3` in Claude Code, `$tessaridb-s3` in Codex).
+
+| Skill | Use it for | Checked against |
+|---|---|---|
+| `tessaridb` | TessariQL, every engine (full text, vectors, geometry, graphs, key-value spaces, queues, topics, time series, vaults), transactions and history, the five clients, security, running and backing up a node | TessariDB 0.36.1 |
+| `tessaridb-cluster` | standing up a cluster, replication and acknowledgement, leadership and failover, shards and placement, reads and routing, upgrades | TessariDB 0.36.1 |
+| `tessaridb-s3` | TessariDB S3 on one node: configuration, buckets and objects, users and keys, policies, encryption, notifications, lifecycle, the clients | TessariDB S3 0.2.1-beta |
+| `tessaridb-s3-cluster` | TessariDB S3 across nodes: erasure codes and zones, certificates, healing, layouts, joining nodes, regions | TessariDB S3 0.2.1-beta |
+| `tessarikv` | embedding the TessariKV engine in a Rust program: batches and durability, reads and snapshots, transactions, keyspaces and options, encryption, checkpoints | tessarikv 0.1.0 |
+
 The skills are plain Markdown: a `SKILL.md` that says when to use it and what to read, and a
-`references/` folder with the detail. Every TessariQL example in the `tessaridb` skill is run
-against the TessariDB release the skill names.
+`references/` folder with the detail. Every TessariQL example is run against the release the skill
+names (`scripts/verify_examples.py <tessaridb binary> <files>`), the Rust examples compile against the
+published crates, and the cluster skills carry a script that stands a local cluster up to try
+things on.
 
 ## Install
 

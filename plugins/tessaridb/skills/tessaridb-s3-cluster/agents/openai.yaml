@@ -1,0 +1,5 @@
+interface:
+  display_name: "TessariDB S3 Cluster"
+  short_description: "Erasure-coded TessariDB S3 across several nodes"
+  brand_color: "#2563EB"
+  default_prompt: "Use $tessaridb-s3-cluster to plan a 4+2 cluster across three zones."

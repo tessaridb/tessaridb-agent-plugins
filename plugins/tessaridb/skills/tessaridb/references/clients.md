@@ -1,24 +1,22 @@
 # Clients, the wire protocol and HTTP
 
+Checked against TessariDB 0.36.1 and clients 0.12.0. Each language has a page with its whole
+surface: <https://docs.tessaridb.com/clients/choosing>.
+
 ## The five clients
 
 | Language | Package | Install |
 |---|---|---|
 | Rust | `tessaridb-client` | `cargo add tessaridb-client` (crates.io) |
-| Python | `tessaridb-client`, imported as `tessaridb` | from its repository, `github.com/tessaridb/tessaridb-sdk-python` |
-| TypeScript / Node | `@tessaridb/client` | from its repository, `github.com/tessaridb/tessaridb-sdk-js` |
+| Python ≥ 3.11 | `tessaridb-client`, imported as `tessaridb` | `pip install git+https://github.com/tessaridb/tessaridb-sdk-python` |
+| TypeScript, Node ≥ 22 and browsers | `@tessaridb/client` | clone `github.com/tessaridb/tessaridb-sdk-js`, `npm install && npm run build`, then `npm install ../tessaridb-sdk-js` |
 | Go | `github.com/tessaridb/tessaridb-sdk-go` | `go get github.com/tessaridb/tessaridb-sdk-go` |
-| Kotlin / JVM | `com.tessaridb:tessaridb-client` | from its repository, `github.com/tessaridb/tessaridb-sdk-kotlin` |
+| Kotlin / JVM | `com.tessaridb:tessaridb-client` | from `github.com/tessaridb/tessaridb-sdk-kotlin` |
 
-All are Apache-2.0, written from the protocol specification alone, and checked against the same
-conformance corpus. Version 0.9.0 of each speaks protocol 1.3, follows a cluster's redirects, exposes a refusal's class,
-and
-speaks TLS 1.3 to a node given a certificate. Each checks the certificate chain and the host name,
-has no option to skip that check, and never falls back to the clear after a failed handshake. Trust
-comes from a PEM authority or the system store: Rust `Tls::trusting_pem`, Python
-`tessaridb.tls_context("ca.pem")` passed as `tls=`, TypeScript `connect({ …, tls: { ca } })`, Go
-`TrustPEM` with `DialTLS`, Kotlin `Trust.fromPem`. The prompt takes `--tls-authority ca.pem`.
-The node's major protocol version must match the client's.
+All are Apache-2.0 with no runtime dependencies, written from the protocol specification and
+checked against one conformance corpus. A client's version is its own: what must match is the
+protocol **major** (1). Clients 0.12.0 speak protocol 1.6 and send newer frames only to a node that
+announces the minor that reads them.
 
 ## Connecting and asking
 
@@ -27,13 +25,12 @@ Python:
 ```python
 import tessaridb
 
-with tessaridb.connect("127.0.0.1:9080", user="owner", password="…") as db:
+with tessaridb.connect("127.0.0.1:9080", user="owner", password=password) as db:
     reply = db.execute(
-        "USE NAMESPACE prod; USE DATABASE shop; SELECT * FROM users WHERE name = $who;",
-        {"who": tessaridb.Text("ada")},
+        "USE NAMESPACE prod; USE DATABASE shop; SELECT * FROM customers WHERE name = $who;",
+        {"who": tessaridb.Text("Ada")},
     )
-    records = reply.outcomes[-1]
-    for row in records.rows:
+    for row in reply.outcomes[-1].rows:
         print(row.identity, row.value)
 ```
 
@@ -43,59 +40,148 @@ TypeScript:
 import { connect } from '@tessaridb/client';
 
 const db = await connect({ host: '127.0.0.1', port: 9080 });
-const reply = await db.execute(
-  'USE NAMESPACE prod; USE DATABASE shop; SELECT * FROM users;',
-);
+const reply = await db.execute('USE NAMESPACE prod; USE DATABASE shop; SELECT * FROM customers;');
 ```
 
-Every client has the same shape: `connect`, `execute(script, parameters)`, and a reply holding one
-outcome per statement. The last outcome is usually the one you want.
+Rust:
+
+```rust
+let mut client = Client::connect("127.0.0.1:9080").await?;
+let answers = client
+    .run("USE NAMESPACE prod; USE DATABASE shop; SELECT * FROM customers;", None)
+    .await?;
+```
+
+Every client has the same shape: connect to a bare `host:port` (no URL scheme), run a script with a
+parameters map, and get one outcome per statement. The last one is usually the read you wanted; the
+`USE` lines answer `Done`. The password is spent once, on the connection's first request.
 
 ## Rules for application code
 
-- **One connection is one session.** `USE`, a signed-in user and an open transaction belong to it.
-  Send the `USE` lines with every unit of work, and never share one connection between threads that
-  issue transactions.
-- **Bind every value.** Pass parameters (`$who`), never formatted text. Each client also has a
-  query builder (`select('users').field('name').where(compare('city', '=', …))`) that binds values
-  and checks names against a pattern narrower than the language's own.
-- **Keep `NONE` and `NULL` apart**, even in a language with one word for both. The clients model
-  them as different values.
-- **Read the notes.** A reply's outcome carries notes, for example "a comparison skipped records of
-  another kind" or "a source hit its ceiling". Log or surface them; never drop them.
-- **Branch on the refusal's class.** Every refusal carries one of nine classes: `invalid`,
-  `unauthenticated`, `forbidden`, `throttled`, `elsewhere`, `retry`, `conflict`, `unavailable`,
-  `internal`. Over HTTP it is the body's `code` and the status follows it; over the wire it is one
-  byte at protocol 1.3. Retry only `retry`. `retry` and `conflict` are both HTTP `409`, so branch on
-  the class rather than the number, and never on text parsed from a message: refusal names are not
-  on the wire.
-- **Following changes takes the connection.** A subscription (change feed) consumes the connection
-  it runs on, so open a second connection for queries. Resume from the last sequence you handled
-  **plus one**.
+- **One connection is one session.** `USE`, the signed-in user and an open transaction belong to
+  it. Send the `USE` lines with every unit of work (a pooled connection that reconnected has
+  forgotten them), and never share one connection between threads issuing transactions.
+- **Bind every value.** Pass parameters, never formatted text. Values are typed: `Text`,
+  `Integer`, `Float`, `Decimal`, `Datetime` and so on; a 64-bit integer stays an integer.
+- **Use the builder when it fits.** It binds every value and checks every name against a pattern
+  narrower than the language's own:
 
-## On a cluster
+```python
+from tessaridb import select, compare, Text
 
-A client connected to a node that can't run a statement gets a redirect to the node that can, and
-the 0.7 clients follow it. They check that the node they reach is the one named, refuse a redirect
-older than one already followed, give up after three hops, and re-send the session's `USE` there.
-A write sent to a follower is forwarded to the leader by the node itself.
+statement = (
+    select("customers")
+    .field("name")
+    .where(compare("city", "=", Text("Paris")))
+    .order_by("name")
+    .limit(50)
+)
+rendered = statement.render()
+reply = db.execute("USE NAMESPACE prod; USE DATABASE shop;")
+reply = db.execute(rendered.script, rendered.parameters)
+```
+
+- **Keep `NONE` and `NULL` apart**, even in a language with one word for both
+  (`tessaridb.NONE` and `tessaridb.NULL` in Python).
+- **Read the notes** each outcome carries ("a comparison skipped records of another kind", "a source
+  hit its ceiling", "estimated"). Log or surface them; never drop them.
+- **Branch on the refusal's class**, never on its text. One of nine: `invalid`, `unauthenticated`,
+  `forbidden`, `throttled`, `elsewhere`, `retry`, `conflict`, `unavailable`, `internal`
+  (Python `Refused.refusal_class`, TypeScript `RefusalError.refusalClass`). Retry only `retry`,
+  bounded. Details in [refusals.md](refusals.md).
+- **TLS has no off switch.** Against a node with a certificate, trust its authority:
+  Python `tessaridb.tls_context("ca.pem")` passed as `tls=`, TypeScript `connect({ …, tls: { ca } })`,
+  Rust `Tls::trusting_pem`, Go `TrustPEM` with `DialTLS`, Kotlin `Trust.fromPem`. The prompt takes
+  `--tls-authority ca.pem`. The client checks the chain and the host name, and never falls back to
+  the clear.
+- **On a cluster** the clients follow a redirect to the node that can answer (three hops at most)
+  and re-send the session's `USE` there.
+
+## Following changes
+
+```python
+watcher = tessaridb.connect("127.0.0.1:9080", user="owner", password=password)
+watcher.execute("USE NAMESPACE prod; USE DATABASE shop;")
+changes = watcher.subscribe(from_=0)
+for change in changes:
+    print(change.sequence, change.table, change.identity, change.removed)
+```
+
+- **Subscribing consumes the connection**: open a second one for queries.
+- The node drops a subscriber that stops reading for 30 seconds; nothing is lost, because the log
+  is the buffer. Reconnect and subscribe from `changes.resume_from` (the last sequence handled
+  **plus one**). Resuming at a handled position delivers it twice; resuming past one skips it.
+- A feed over one table can be narrowed by a condition with bound values; a record that stops
+  matching arrives as a removal, and a feed that skipped changes sends a `Progress`. **Store a
+  Progress exactly like a change's position**, or a quiet feed keeps a resume point the log may
+  have pruned:
+
+```python
+from tessaridb import Integer, Progress
+
+feed = conn.subscribe(0, "orders", condition="total > $least", parameters={"least": Integer(100)})
+for arrived in feed:
+    if isinstance(arrived, Progress):
+        continue
+    print(arrived.identity, arrived.removed)
+```
+
+## Worker loops the clients carry
+
+Each client has the same helpers (Python names shown; the others are on each language's page):
+
+```python
+from tessaridb import Ack, Cache, Consumer, Finish, Queue, Text, Vault
+from tessaridb.query import compare
+
+consumer = Consumer(conn, "prod", "shop", "events", "mailer", batch=10)
+consumer.run_auto(handle)                    # returning acks, raising hands the message back
+
+worker = Queue(conn, "prod", "shop", "jobs", "resizer", batch=10,
+               where=compare("kind", "=", Text("image")))
+worker.run_auto(lambda job: resize(job))     # returning deletes the record, raising releases it
+
+cache = Cache(conn, "prod", "shop", "cache")
+cache.set("session:abc", Text("ada"), ttl=1800)
+lease = cache.lock("nightly-report", ttl=30)
+
+tessaridb.unseal(conn, store_passphrase)     # the passphrase travels in its own frame
+vault = Vault(conn, "prod", "shop", "team")
+secret = vault.reveal("github", ["token"])
+```
+
+- Topic groups and queues are **at least once**: key outside effects on topic + group + position,
+  or on queue + record id.
+- The loops are synchronous in Python; run them in a thread and call `stop()` from another.
+- `Vault.declare(…)` creates a vault with its own passphrase without putting it in a script
+  (engine 0.36.1 and later).
 
 ## HTTP
 
-Port 8000 (when started with `--http`) serves:
+A node started with `--http` (port 8000 in the container) serves:
 
 | Route | For |
 |---|---|
-| `POST /script` | run a script; JSON answer |
 | `POST /session` | exchange a password for a token, once |
-| `GET /health`, `GET /ready`, `GET /metrics` | probes and Prometheus metrics, no credential |
-| `GET /backup` | a backup of the store, for an operator |
+| `POST /script` | run a script with parameters; JSON answer |
+| `PUT`, `GET`, `HEAD`, `DELETE /files/{ns}/{db}/{bucket}/{path}` | files in a bucket |
+| `/kv/…` | a space as a cache |
+| `POST /series/{ns}/{db}/{series}` | append events to a time series |
+| `/vault…` | seal status, unseal, seal, change passphrase, declare a vault with its own |
 | `GET /watch` | a change feed over a WebSocket |
 | `GET /wire` | the wire protocol over a WebSocket, for browsers |
+| `GET /backup` | a snapshot of the store, for an operator |
+| `GET /health`, `/ready`, `/metrics` | probes and Prometheus metrics, no credential |
 | `/` | the web console |
 
-- Over HTTP, sign in once at `POST /session` and send the token afterwards. A password sent with every
-  request pays an Argon2id hash on every request (about 130 ms).
-- `401` means "sign in"; `403` means "signing in again won't help". Keep them apart.
-- JSON loses types (decimal, datetime, record links). Use the wire protocol for data, and HTTP for
-  probes, files, backups and browsers.
+- Sign in once at `POST /session` and send the token afterwards. A password sent with every request
+  pays an Argon2id hash every time (roughly 100 ms).
+- Error bodies are `{"error": "…", "code": "<class>"}` and the status follows the class: `invalid`
+  400, `unauthenticated` 401, `forbidden` 403, `throttled` 429, `retry` and `conflict` 409,
+  `unavailable` 503, `internal` 500. Keep `401` (sign in) and `403` (signing in won't help) apart,
+  and branch `409` on the `code`.
+- JSON loses types (decimal, datetime, record links, 64-bit integers). Use the wire protocol for
+  data, and HTTP for files, probes, backups and browsers.
+
+The protocol itself (frames, the greeting, the 16 MiB frame ceiling, the conformance corpus) is at
+<https://docs.tessaridb.com/clients/protocol> and in `github.com/tessaridb/tessaridb-protocol`.

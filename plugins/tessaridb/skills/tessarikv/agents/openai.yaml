@@ -1,0 +1,5 @@
+interface:
+  display_name: "TessariKV"
+  short_description: "Embed the TessariKV storage engine in Rust"
+  brand_color: "#2563EB"
+  default_prompt: "Use $tessarikv to store this data in an embedded key-value engine."

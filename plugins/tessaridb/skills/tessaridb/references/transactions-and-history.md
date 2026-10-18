@@ -1,5 +1,8 @@
 # Transactions, scripts and history
 
+Checked against TessariDB 0.36.1. Full detail: <https://docs.tessaridb.com/query-language/transactions>
+and `/query-language/paging-and-history`.
+
 ## A transaction
 
 ```tessariql
@@ -27,8 +30,12 @@ COMMIT;
 - Two transactions that write the same record are told so at commit (`CommitContention` /
   `Conflict`). The store doesn't wait or retry for you. Retry refusals of the class `retry`
   explicitly, with a bound, and treat every other refusal as final.
-- On a cluster, a transaction over ranges two nodes lead must say `COMMIT ACROSS LEADERS`
-  (see operations.md).
+- There is one boundary, not a stack: `BEGIN` twice is `NestedTransaction`, and `COMMIT` with nothing
+  open is `NoOpenTransaction`.
+- The unit is the **database**: a table, a space, a queue and a topic in one database commit
+  together.
+- On a cluster, a transaction over ranges two nodes lead must say `COMMIT ACROSS LEADERS` (see the
+  tessaridb-cluster skill).
 
 `THROW 'message'` refuses on purpose, inside a transaction to abandon it:
 
@@ -49,6 +56,19 @@ inside `BEGIN … COMMIT`, and rehearse it with `VERIFY`.
 
 In deployment scripts use `IF NOT EXISTS` on every `DEFINE`, so a restart can re-run the script.
 
+## Paging
+
+Page with `AFTER` the last record you saw, never with a growing `START`:
+
+```tessariql
+SELECT * FROM accounts ORDER BY owner LIMIT 1;
+SELECT * FROM accounts ORDER BY owner AFTER accounts:1 LIMIT 1;
+```
+
+When the order can't seek to the anchor, the read walks and says so in a note ("this page was
+reached by reading the records rather than seeking"). Same answer, but the cost of the whole read:
+fine in development, quadratic in production. Order by the identity or by an indexed field.
+
 ## Reading the past
 
 ```tessariql
@@ -61,8 +81,12 @@ INFO FOR VERSIONS OF accounts:1;
   It is a sequence, never a timestamp. A version that hasn't happened yet is refused, and the
   refusal names the current one.
 - The schema is read at that version too: a table defined later is unknown there.
-- A historical read doesn't use indexes (an index entry carries no version), so it scans.
-  It can't run inside a transaction and can't be combined with `STALENESS`.
+- A historical read is served by a **plain** value index (it keeps retired entries since
+  0.34.0-beta, re-testing each candidate at the version), so `USING INDEX` holds on it. A `UNIQUE`,
+  full-text, spatial, containment or vector index is not used at an earlier version, and neither is
+  a plain one beyond what housekeeping kept; `USING INDEX` then is `IndexNotUsed`.
+- `VERSION` can't run inside a transaction (`VersionInsideTransaction`) and can't be combined with
+  `STALENESS`.
 - `INFO FOR HISTORY OF r` lists every write to one record, newest first, each with the value it
   became. Its `at` is the write's position in that database's log, **not** a number to pass to
   `VERSION`: the log counts this database's commits, the version counts every commit in the store.
