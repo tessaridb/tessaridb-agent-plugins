@@ -1,6 +1,6 @@
 ---
 name: tessaridb
-description: Work with TessariDB, a multi-model database with its own query language, TessariQL. Use when writing, reviewing or debugging TessariQL; designing tables, fields, indexes or analyzers; adding full-text, vector, geo or graph search; using key-value spaces, files, queues, topics, time series, views, events or vaults; connecting an application from Rust, Python, TypeScript, Go or Kotlin, or over HTTP; securing, serving, backing up or upgrading a node; or explaining why a statement was refused or returned what it did. For a cluster of nodes use the tessaridb-cluster skill.
+description: Work with TessariDB, a multi-model database with its own query language, TessariQL. Use when writing, reviewing or debugging TessariQL; designing tables, fields, indexes or analyzers; adding full-text, vector, geo or graph search; using key-value spaces, files, queues, topics, time series, views, events or vaults; connecting an application from Rust, Python, TypeScript, Go or Kotlin, or over HTTP; pointing existing Kafka or RESP clients at a node; securing, serving, backing up or upgrading a node; or explaining why a statement was refused or returned what it did. For a cluster of nodes use the tessaridb-cluster skill.
 ---
 
 # TessariDB
@@ -9,7 +9,7 @@ TessariDB is one database with several engines: tables and documents, full-text 
 geometry, graphs, key-value spaces, files, queues, topics, time series and vaults. Every engine is
 reached through one language, **TessariQL**, and one transaction can write to all of them.
 
-This skill was checked against **TessariDB 0.36.1** (image `tessaridb/tessaridb:0.36.1`, clients
+This skill was checked against **TessariDB 0.37.1** (image `tessaridb/tessaridb:0.37.1`, clients
 `0.12.0`, protocol `1.6`). The language and the wire format can still change before 1.0, so name
 the version when behaviour matters. The documentation at <https://docs.tessaridb.com> is the
 reference; when it and this skill disagree, trust the site.
@@ -26,6 +26,7 @@ reference; when it and this skill disagree, trust the site.
 | keeping secrets in a vault | [references/vaults.md](references/vaults.md) |
 | writing several statements as one unit, retrying, paging, reading the past | [references/transactions-and-history.md](references/transactions-and-history.md) |
 | connecting an application, following changes, the wire protocol, HTTP | [references/clients.md](references/clients.md) |
+| pointing existing Kafka producers and consumers, or RESP key-value clients, at a node | [references/kafka-and-resp-clients.md](references/kafka-and-resp-clients.md) |
 | declaring users, roles and grants; TLS; encryption at rest | [references/security.md](references/security.md) |
 | running a node: the container, serving, backups, the log, upgrades, the console | [references/operations.md](references/operations.md) |
 | reaching for a function | [references/functions.md](references/functions.md) |
@@ -40,10 +41,10 @@ it. A store in memory costs nothing and disappears when the process exits:
 
 ```sh
 # with the image (no install):
-docker run --rm tessaridb/tessaridb:0.36.1 -e "DEFINE NAMESPACE t; USE NAMESPACE t; DEFINE DATABASE t; USE DATABASE t; DEFINE COLLECTION notes; CREATE notes:1 = { body: 'hi' }; SELECT * FROM notes;"
+docker run --rm tessaridb/tessaridb:0.37.1 -e "DEFINE NAMESPACE t; USE NAMESPACE t; DEFINE DATABASE t; USE DATABASE t; DEFINE COLLECTION notes; CREATE notes:1 = { body: 'hi' }; SELECT * FROM notes;"
 
 # a script file, with a bound parameter:
-docker run --rm -v "$PWD:/work:ro" tessaridb/tessaridb:0.36.1 -f /work/try.tessariql --param who="'ada'"
+docker run --rm -v "$PWD:/work:ro" tessaridb/tessaridb:0.37.1 -f /work/try.tessariql --param who="'ada'"
 
 # with the binary: in memory, on disk, or against a running node
 tessaridb -e '<script>'
@@ -64,7 +65,7 @@ TESSARIDB_PASSWORD='…' tessaridb --at 127.0.0.1:9080 --user owner -f check.tes
 docker run -d --name tessaridb -p 9080:9080 -p 8000:8000 \
   -v tessaridb-data:/var/lib/tessaridb \
   -e TESSARIDB_INITIAL_USER=owner -e TESSARIDB_INITIAL_PASSWORD='choose-a-real-one' \
-  tessaridb/tessaridb:0.36.1
+  tessaridb/tessaridb:0.37.1
 ```
 
 Port 9080 is the wire protocol the clients use; port 8000 is HTTP and serves the web console at

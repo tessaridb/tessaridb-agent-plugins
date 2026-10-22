@@ -1,6 +1,6 @@
 # Refusals: what was refused, and what to do
 
-Checked against TessariDB 0.36.1. Every refusal, by name: <https://docs.tessaridb.com/reference/refusals>.
+Checked against TessariDB 0.37.1. Every refusal, by name: <https://docs.tessaridb.com/reference/refusals>.
 
 The principle behind all of them: **an absence narrows a read; a mistake in the statement refuses
 it.** A record missing a field just isn't in the answer; a present value of the wrong type, a name

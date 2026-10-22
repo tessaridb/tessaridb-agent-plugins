@@ -1,6 +1,6 @@
 # Functions and aggregates
 
-Checked against TessariDB 0.36.1; every name below answered on that build. The page with examples
+Checked against TessariDB 0.37.1; every name below answered on that build. The page with examples
 for each is <https://docs.tessaridb.com/reference/functions>.
 
 A call is an ordinary expression and stands wherever a value stands. Every name is
