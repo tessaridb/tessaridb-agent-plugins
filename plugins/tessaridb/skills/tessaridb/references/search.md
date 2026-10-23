@@ -1,6 +1,6 @@
 # Full-text search
 
-Checked against TessariDB 0.37.1. Full detail: <https://docs.tessaridb.com/query-language/full-text-search>.
+Checked against TessariDB 0.38.1. Full detail: <https://docs.tessaridb.com/query-language/full-text-search>.
 
 Text becomes searchable in three steps: declare an **analyzer** (how text becomes terms), put it
 on a **field**, and add a **SEARCH index** on that field when you want speed and scores.

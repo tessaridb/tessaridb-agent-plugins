@@ -1,6 +1,6 @@
 # Spaces, files, queues, topics, time series and views
 
-Checked against TessariDB 0.37.1. Each engine is a kind of table, so `CREATE`, `SELECT`, grants,
+Checked against TessariDB 0.38.1. Each engine is a kind of table, so `CREATE`, `SELECT`, grants,
 backups and replication work on it as on any table, and one transaction can write to all of them.
 
 | Question | Engine |

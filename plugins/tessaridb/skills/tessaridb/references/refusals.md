@@ -1,6 +1,6 @@
 # Refusals: what was refused, and what to do
 
-Checked against TessariDB 0.37.1. Every refusal, by name: <https://docs.tessaridb.com/reference/refusals>.
+Checked against TessariDB 0.38.1. Every refusal, by name: <https://docs.tessaridb.com/reference/refusals>.
 
 The principle behind all of them: **an absence narrows a read; a mistake in the statement refuses
 it.** A record missing a field just isn't in the answer; a present value of the wrong type, a name
@@ -34,7 +34,7 @@ for you: a `retry` that nobody retries is work silently lost.
 | You see | Because | Do |
 |---|---|---|
 | `NoNamespaceSelected`, `NoDatabaseSelected` | no `USE` on this connection | send `USE NAMESPACE …; USE DATABASE …;` with the work |
-| `UnexpectedToken` on `DELETE FROM t WHERE …;` | a set delete states its reach | add `LIMIT n` or `LIMIT ALL` |
+| `UnexpectedToken` on `DELETE FROM t;` or `UPDATE t SET …;` | a set write states a condition | add `WHERE …` (or name one record; `TRUNCATE t` empties a table) |
 | `UnexpectedToken` on `UPDATE t SET …` | `UPDATE` names one record | read the ids, update each (in a transaction) |
 | `RecordExists` | `CREATE` at an id that exists | `UPDATE`, `UPSERT`, or a new id |
 | `NoSuchRecord` (class `conflict`) | `UPDATE` of a record that isn't there | `UPSERT`, or re-read |

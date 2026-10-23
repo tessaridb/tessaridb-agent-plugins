@@ -9,7 +9,7 @@ TessariDB is one database with several engines: tables and documents, full-text 
 geometry, graphs, key-value spaces, files, queues, topics, time series and vaults. Every engine is
 reached through one language, **TessariQL**, and one transaction can write to all of them.
 
-This skill was checked against **TessariDB 0.37.1** (image `tessaridb/tessaridb:0.37.1`, clients
+This skill was checked against **TessariDB 0.38.1** (image `tessaridb/tessaridb:0.38.1`, clients
 `0.12.0`, protocol `1.6`). The language and the wire format can still change before 1.0, so name
 the version when behaviour matters. The documentation at <https://docs.tessaridb.com> is the
 reference; when it and this skill disagree, trust the site.
@@ -41,10 +41,10 @@ it. A store in memory costs nothing and disappears when the process exits:
 
 ```sh
 # with the image (no install):
-docker run --rm tessaridb/tessaridb:0.37.1 -e "DEFINE NAMESPACE t; USE NAMESPACE t; DEFINE DATABASE t; USE DATABASE t; DEFINE COLLECTION notes; CREATE notes:1 = { body: 'hi' }; SELECT * FROM notes;"
+docker run --rm tessaridb/tessaridb:0.38.1 -e "DEFINE NAMESPACE t; USE NAMESPACE t; DEFINE DATABASE t; USE DATABASE t; DEFINE COLLECTION notes; CREATE notes:1 = { body: 'hi' }; SELECT * FROM notes;"
 
 # a script file, with a bound parameter:
-docker run --rm -v "$PWD:/work:ro" tessaridb/tessaridb:0.37.1 -f /work/try.tessariql --param who="'ada'"
+docker run --rm -v "$PWD:/work:ro" tessaridb/tessaridb:0.38.1 -f /work/try.tessariql --param who="'ada'"
 
 # with the binary: in memory, on disk, or against a running node
 tessaridb -e '<script>'
@@ -55,7 +55,7 @@ TESSARIDB_PASSWORD='…' tessaridb --at 127.0.0.1:9080 --user owner -f check.tes
 - Each answer says how it was read: `(3 record(s), via index)` or `via scan`. `EXPLAIN <read>`
   shows the plan without running it.
 - A refusal prints the store's own message with the place in the script, for example
-  `expected LIMIT n or LIMIT ALL … at 32..33`. Quote it; don't paraphrase it.
+  ``expected `WHERE` and what to remove at 16..17, found `;` ``. Quote it; don't paraphrase it.
 - A script run with `-f` stops at the first refusal and keeps everything before it. A `-e` string is
   parsed whole first, so one bad token means none of it runs.
 
@@ -65,7 +65,7 @@ TESSARIDB_PASSWORD='…' tessaridb --at 127.0.0.1:9080 --user owner -f check.tes
 docker run -d --name tessaridb -p 9080:9080 -p 8000:8000 \
   -v tessaridb-data:/var/lib/tessaridb \
   -e TESSARIDB_INITIAL_USER=owner -e TESSARIDB_INITIAL_PASSWORD='choose-a-real-one' \
-  tessaridb/tessaridb:0.37.1
+  tessaridb/tessaridb:0.38.1
 ```
 
 Port 9080 is the wire protocol the clients use; port 8000 is HTTP and serves the web console at
@@ -96,8 +96,9 @@ the answer is wrong. Each rule below prevents one of them.
    parameters, so never take them from user input.
 3. **`= { … }` replaces the whole record.** `UPDATE users:1 = { name: 'x' }` deletes every other
    field. To change some fields, use `SET` or `MERGE`.
-4. **A conditional delete states its reach:** `DELETE FROM t WHERE … LIMIT n` or `LIMIT ALL`.
-   Without one it is refused rather than deleting an unknown number of rows.
+4. **A set write states a condition:** `UPDATE t SET … WHERE …` and `DELETE FROM t WHERE …` change
+   every match (`LIMIT n` caps it). Without a `WHERE` they are refused, so a lost condition can't
+   rewrite or empty a table; `TRUNCATE t` empties one on purpose.
 5. **`NONE` and `NULL` are different.** `NONE` means "no such field", `NULL` means "present and
    empty". They compare unequal, and neither takes part in `<` or `>`.
 6. **A comparison across kinds is a note, not an error.** `WHERE age > 18` over records where some

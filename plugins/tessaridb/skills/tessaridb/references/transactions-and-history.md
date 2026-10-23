@@ -1,6 +1,6 @@
 # Transactions, scripts and history
 
-Checked against TessariDB 0.37.1. Full detail: <https://docs.tessaridb.com/query-language/transactions>
+Checked against TessariDB 0.38.1. Full detail: <https://docs.tessaridb.com/query-language/transactions>
 and `/query-language/paging-and-history`.
 
 ## A transaction
@@ -31,7 +31,7 @@ COMMIT;
   `Conflict`). The store doesn't wait or retry for you. Retry refusals of the class `retry`
   explicitly, with a bound, and treat every other refusal as final.
 - There is one boundary, not a stack: `BEGIN` twice is `NestedTransaction`, and `COMMIT` with nothing
-  open is `NoOpenTransaction`.
+  open is `NoOpenTransaction`. Part of a transaction rolls back to a `SAVEPOINT` (below).
 - The unit is the **database**: a table, a space, a queue and a topic in one database commit
   together.
 - On a cluster, a transaction over ranges two nodes lead must say `COMMIT ACROSS LEADERS` (see the
@@ -46,6 +46,23 @@ UPDATE accounts:1 SET balance = 0;
 THROW 'balance would go negative';
 COMMIT;
 ```
+
+`SAVEPOINT name` marks a place inside `BEGIN … COMMIT`; `ROLLBACK TO name` puts back what the
+transaction had done there and keeps the savepoint; `RELEASE SAVEPOINT name` forgets it and keeps
+the work:
+
+```tessariql
+BEGIN;
+CREATE accounts:3 = { owner: 'kate', balance: 5 };
+SAVEPOINT before_four;
+CREATE accounts:4 = { owner: 'ken', balance: 5 };
+ROLLBACK TO before_four;
+COMMIT;
+```
+
+Only `accounts:3` lands. Outside a transaction a savepoint is `SavepointOutsideATransaction`, an
+unknown name is `NoSuchSavepoint`, and a rollback over a queue claim (or work sent to other
+leaders) taken since the savepoint is refused, `SavepointCrossesClaim`, rather than half done.
 
 ## A script is not a transaction
 

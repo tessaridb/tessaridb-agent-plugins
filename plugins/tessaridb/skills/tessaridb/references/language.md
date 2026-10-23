@@ -1,6 +1,6 @@
 # TessariQL: the language
 
-Every example here was run against TessariDB 0.37.1 with a namespace and database already
+Every example here was run against TessariDB 0.38.1 with a namespace and database already
 selected. An example that is meant to be refused is marked `-- refused:` with the refusal's name.
 
 Contents: [Tenancy](#tenancy-namespace-database-table) · [Kinds of table](#kinds-of-table) ·
@@ -65,6 +65,46 @@ DEFINE FIELD tier ON accounts TYPE string ASSERT $value IN ['bronze', 'gold'];
 The default fills first, then `REQUIRED` checks, then `ASSERT` runs, with `$value` as the field's
 value. Change a declared table with `ALTER TABLE t ADD FIELD …`, `ALTER FIELD …` or
 `DROP FIELD …`, and run `CHECK TABLE t` afterwards to list records that no longer fit.
+
+A NEW field's default fills the records already there, in the declaration's transaction, so
+`REQUIRED DEFAULT` can be added to a populated table; changing an existing field's default reaches
+later writes only. `USING` converts the stored values with a type change, and tables and fields
+rename:
+
+```tessariql
+DEFINE COLLECTION ledgers;
+DEFINE FIELD total ON ledgers TYPE int;
+CREATE ledgers:1 = { total: 10 };
+ALTER TABLE ledgers ADD FIELD region TYPE string REQUIRED DEFAULT 'eu';
+ALTER TABLE ledgers ALTER FIELD total TYPE string USING type::string(total);
+ALTER TABLE ledgers RENAME FIELD region TO zone;
+ALTER TABLE ledgers RENAME TO books;
+```
+
+A rename keeps records, indexes and grants (they hold the table by identity); it is refused while
+a view or event names the table by text (`TableNamedByText`), and a field rename is refused while
+an index or another field's `ASSERT` reads the field (`FieldNotRenamed`).
+
+A `TYPE record` field can require that its value names a record of another table:
+
+```tessariql
+DEFINE COLLECTION teams;
+DEFINE COLLECTION members;
+DEFINE FIELD team ON members TYPE record REFERENCES teams ON DELETE CASCADE;
+CREATE teams:1 = { name: 'core' };
+CREATE members:1 = { team: teams:1 };
+DELETE teams:1;
+```
+
+```tessariql
+-- refused: NoSuchReference
+CREATE members:2 = { team: teams:9 };
+```
+
+`ON DELETE REJECT` (the default) refuses a delete while a record names it (`StillReferenced`),
+`CASCADE` deletes the naming records, `UNSET` removes the field; a referenced table is not
+truncated or dropped while the field stands (`ReferencedTable`). The check runs in the writer's
+snapshot, and a delete in the referenced table scans the referencing table.
 
 ### Types
 
@@ -146,8 +186,16 @@ UPDATE users:'grace' SET age = 48 RETURN BEFORE;
 `RETURN BEFORE` is the cheapest audit trail there is: the old value, taken in the same transaction
 as the write. A write that answers a record needs `read` as well as `write` authority.
 
-`UPDATE` always names one record. There is no table-wide `UPDATE … WHERE`: read the ids and update
-each one, inside one transaction if they must change together.
+An `UPDATE` names one record or states a condition. With a condition it changes every record the
+condition holds for, in one transaction, and answers how many (`0` when none match). `LIMIT n`
+changes at most that many; `RETURN BEFORE` / `RETURN AFTER` answer the records instead:
+
+```tessariql
+UPDATE users SET age = 0 WHERE age > 150;
+UPDATE users MERGE { checked: true } WHERE age > 150 LIMIT 10 RETURN AFTER;
+```
+
+With neither an id nor a `WHERE` it is refused, so a lost condition cannot rewrite the table:
 
 ```tessariql
 -- refused: UnexpectedToken
@@ -168,19 +216,21 @@ UPDATE users:'grace' SET age = 49 WHERE age = 48;
 ```tessariql
 DELETE users:'grace';
 DELETE FROM users WHERE age < 18 LIMIT 1;
-DELETE FROM users WHERE age < 18 LIMIT ALL;
-DELETE FROM users WHERE age > 100 LIMIT ALL RETURN BEFORE;
+DELETE FROM users WHERE age < 18;
+DELETE FROM users WHERE age > 100 RETURN BEFORE;
 ```
 
-A conditional delete must say how far it reaches, so a lost `WHERE` or a wider match than you
-expected can't delete by omission:
+A set delete states a condition; the bound is optional (`LIMIT n` caps it, `LIMIT ALL` still
+parses). Without a `WHERE` it is refused, so a lost condition can't empty the table:
 
 ```tessariql
 -- refused: UnexpectedToken
-DELETE FROM users WHERE age < 18;
+DELETE FROM users;
 ```
 
-With `RETURN BEFORE` a set delete answers the records it removed; without it, how many.
+With `RETURN BEFORE` a set delete answers the records it removed. To empty a table on purpose,
+`TRUNCATE t` removes every record in one transaction and keeps the definition, indexes, grants and
+events (no event runs for the removed records).
 
 ## Records that expire
 
@@ -256,15 +306,30 @@ SELECT * FROM ONLY users:'kate';
   (`NotAlone`).
 - `doc CONTAINS { customer: { city: 'Paris' } }` asks whether a document holds a sub-document;
   `DEFINE INDEX … FIELDS doc CONTAINS` serves it.
-- Aggregates: `count`, `sum`, `mean`, `min`, `max`, `median`, `collect`, and
+- Aggregates: `count`, `count(DISTINCT x)` (exact; a group over 1 000 000 distinct values is
+  refused, `DistinctTooMany`), `sum`, `mean`, `min`, `max`, `median`, `collect`, and
   `approx_distinct(x)` / `approx_quantile(x, q)`, whose answers carry an `estimated` note
   ([functions.md](functions.md)).
+- `GROUP BY k HAVING cond` keeps the groups a condition holds for; it may use folds and the
+  projected names. A fold in a `WHERE` is refused (`FoldInAFilter`).
+- `ORDER BY x NULLS FIRST` / `NULLS LAST` moves absent and null values (lowest by default).
+- Window functions answer per record and keep every record: `row_number()`, `rank()`,
+  `dense_rank()`, `lag`/`lead(v, n, default)`, `first_value`, `last_value`, and `count`/`sum`/
+  `mean`/`min`/`max` over `OVER ([PARTITION BY …] [ORDER BY …])` — a running total when ordered.
+  Computed after the `WHERE`, before the read's own order and `LIMIT`; refused beside `GROUP BY`.
 - **Paging: prefer `AFTER` over `START`.** `START 500` does 500 pages of work and shifts when rows
   are inserted. `AFTER <the last record you saw>` seeks there, and the anchor can be bound:
 
 ```tessariql
 SELECT * FROM users ORDER BY name LIMIT 2;
 SELECT * FROM users ORDER BY name AFTER users:'kate' LIMIT 2;
+```
+
+```tessariql
+SELECT count(DISTINCT city) AS cities FROM users;
+SELECT city, count(*) AS n FROM users GROUP BY city HAVING n > 1;
+SELECT name, age FROM users ORDER BY age NULLS LAST;
+SELECT name, rank() OVER (ORDER BY age) AS place FROM users WHERE age != NONE;
 ```
 
 ## Routes: reaching inside a document
@@ -316,6 +381,29 @@ SELECT * FROM (SELECT * FROM users ORDER BY name LIMIT 2) WHERE name = 'ada';
 A subquery holds at most what its `LIMIT` lets it materialise; give it one. A source that passes
 its ceiling without a bound is refused (`Unbounded`) rather than silently cut. A join matches on a
 value nobody wrote down as a link; when records point at each other, a graph traversal is faster.
+
+```tessariql
+SELECT * FROM users LEFT JOIN orders ON users.name = orders.buyer;
+SELECT * FROM users FULL JOIN orders ON users.name = orders.buyer;
+SELECT name FROM users WHERE name IN (SELECT buyer FROM orders LIMIT 100);
+WITH big AS (SELECT * FROM orders WHERE total > 5 LIMIT 100)
+  SELECT users.name AS name FROM users JOIN big ON users.name = big.buyer;
+SELECT name FROM users UNION SELECT buyer AS name FROM orders;
+DEFINE COLLECTION buyers;
+INSERT INTO buyers (name) SELECT buyer FROM orders;
+```
+
+- `LEFT`, `RIGHT`, `FULL JOIN` keep what nothing matched; the missing side is ABSENT from the row
+  (`orders.total` reads `NONE`), never null, and `WHERE` filters the joined rows.
+  `a JOIN b ON … JOIN c ON …` joins more sides; each row keeps every side under its name.
+- `x IN (SELECT y …)` compares with each value; `x = (SELECT max(y) AS m …)` needs exactly one
+  value (several: `SubqueryNotOneValue`). The inner read runs once and cannot name the outer record.
+- `WITH name AS (read)` names a read for one statement; it states its `LIMIT` like any subquery and
+  may not read itself (no recursion — use a traversal with `DEPTH`).
+- `UNION [ALL]`, `INTERSECT`, `EXCEPT` combine left to right by the store's equality; each read
+  keeps its own `LIMIT`/`ORDER BY` — bound the whole by reading it as a source.
+- `INSERT INTO t (cols) SELECT …` maps projected values to columns by position, in one
+  transaction, and never reads its own inserts.
 
 ## Parameters and bindings
 

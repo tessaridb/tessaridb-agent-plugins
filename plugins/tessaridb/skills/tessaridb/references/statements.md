@@ -1,6 +1,6 @@
 # Every statement, one line each
 
-A quick lookup, checked against TessariDB 0.37.1. Each row links the reference that explains it.
+A quick lookup, checked against TessariDB 0.38.1. Each row links the reference that explains it.
 The full list with every clause is <https://docs.tessaridb.com/reference/statements>.
 
 There is no separate schema language, migration tool or admin API: defining a table, declaring a
@@ -22,6 +22,8 @@ user and taking a backup are all statements.
 | `DEFINE COLLECTION t` | any document shape; `EXPIRE` optional |
 | `DEFINE FIELD f ON t TYPE string REQUIRED DEFAULT … ASSERT …` | declare one field |
 | `ALTER TABLE t ADD FIELD … / ALTER FIELD … / DROP FIELD … / SET SCHEMAFULL / SET EXPIRE … / DROP EXPIRE` | change a table |
+| `ALTER TABLE t RENAME TO u` · `ALTER TABLE t RENAME FIELD a TO b` · `ALTER FIELD f TYPE x USING expr` | rename a table or a field; convert stored values with a type |
+| `DEFINE FIELD f ON t TYPE record REFERENCES u [ON DELETE REJECT \| CASCADE \| UNSET]` | a value must name a record of `u`; what deleting it does |
 | `DEFINE INDEX i ON t FIELDS a, b [UNIQUE \| SEARCH \| SPATIAL \| VECTOR cosine \| CONTAINS]` | an index |
 | `REBUILD INDEX i ON t` · `ANALYZE TABLE t` · `CHECK TABLE t` | rebuild (vector recall), statistics, find records that no longer fit |
 | `DEFINE ANALYZER a FILTERS lowercase, ascii, stemmer` | how text becomes terms ([search.md](search.md)) |
@@ -48,10 +50,16 @@ unreachable; a table redefined under the same name is a new, empty table.
 | `INSERT INTO t (a, b) VALUES (…), (…)` | several records in one statement |
 | `UPSERT t:id = { … }` | replace or create |
 | `UPDATE t:id SET a = … / MERGE { … } / = { … } [WHERE cond]` | change one record; `= { … }` replaces it whole; `WHERE` is compare-and-set |
-| `DELETE t:id` · `DELETE FROM t WHERE … LIMIT n \| LIMIT ALL` · `DELETE FROM t:1..3 LIMIT ALL` | remove one, a matching set, or a span |
+| `UPDATE t SET a = … / MERGE { … } WHERE cond [LIMIT n]` | change every match in one transaction; answers how many |
+| `INSERT INTO t (a, b) SELECT x, y FROM …` | one record per record read |
+| `DELETE t:id` · `DELETE FROM t WHERE … [LIMIT n]` · `DELETE FROM t:1..3` · `TRUNCATE t` | remove one, a matching set, a span, or every record |
 | `RELATE a:1->e->b:2 [= { … }]` · `DELETE a:1->e->b:2` | write or remove an edge |
 | `… RETURN BEFORE \| RETURN AFTER` | any write answers with the record |
-| `SELECT … FROM … [WHERE] [GROUP BY] [ORDER BY] [LIMIT] [START \| AFTER] [USING INDEX i] [TIMEOUT d]` | read |
+| `SELECT … FROM … [WHERE] [GROUP BY … [HAVING]] [ORDER BY … [NULLS FIRST \| LAST]] [LIMIT] [START \| AFTER] [USING INDEX i] [TIMEOUT d]` | read |
+| `… [LEFT \| RIGHT \| FULL] JOIN b ON … [JOIN c ON …]` | match on a value; outer joins keep what nothing matched |
+| `WITH n AS (SELECT … LIMIT k) SELECT …` · `… UNION [ALL] \| INTERSECT \| EXCEPT …` · `x IN (SELECT y …)` | name a read, combine reads, compare with a read |
+| `f() OVER ([PARTITION BY …] [ORDER BY …])` | a window value per record |
+| `SAVEPOINT s` · `ROLLBACK TO s` · `RELEASE SAVEPOINT s` | roll back part of a transaction |
 | `THROW 'message'` | abandon the whole transaction |
 | `LET $x = …` · `RETURN expr` | bind a value for the rest of the script; answer with a value |
 
