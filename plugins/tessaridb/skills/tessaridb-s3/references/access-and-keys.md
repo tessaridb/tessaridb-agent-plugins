@@ -104,6 +104,19 @@ first rule matching its origin, method and headers. A browser form can `POST /{b
 a signed policy (expiration, `eq`, `starts-with`, `content-length-range`) that must cover every field;
 it is authorized as the signer's PutObject. A form without a policy is anonymous.
 
+## Signing in to the console through TessariDB OAuth
+
+TessariDB OAuth issues no client secrets, so the console authenticates with a key (from 0.7.0):
+
+1. `openssl genpkey -algorithm ed25519 -out console.pem`; mount it as a secret file and set
+   `TESSARIDB_S3_CONSOLE_OIDC_CLIENT_KEY` to its path, with `_ISSUER` (`https://<oauth host>/<company>`),
+   `_CLIENT_ID` and `_REDIRECT_URI`.
+2. The server logs the public JWK at start. Register the client at OAuth with `auth_method`
+   `private_key_jwt`, `assertion_alg` `EdDSA`, that JWK, the redirect URI exactly, `scope_ceiling`
+   `["openid"]` and `grant_types` `["authorization_code"]`.
+3. A person's first sign-in is refused `401` and their subject is logged; link it with
+   `PUT /api/v1/users/{user}/identity`. An account without a second factor is refused.
+
 ## Temporary credentials
 
 With an identity provider configured for the console (`TESSARIDB_S3_CONSOLE_OIDC_*`), a person whose

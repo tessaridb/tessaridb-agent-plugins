@@ -1,0 +1,5 @@
+interface:
+  display_name: "TessariDB OAuth clusters"
+  short_description: "Run TessariDB OAuth on several servers and regions"
+  brand_color: "#D9A733"
+  default_prompt: "Use $tessaridb-oauth-cluster to add a second region with PEERS and check the redirect."

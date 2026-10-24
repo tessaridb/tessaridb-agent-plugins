@@ -129,7 +129,8 @@ setting. There is no configuration file and no default credential.
 | `TESSARIDB_S3_CONSOLE_SIGN_INS_PER_MINUTE` | `10` | sign-ins per client address per minute (also temporary-credential requests) |
 | `TESSARIDB_S3_CONSOLE_REQUESTS_PER_MINUTE` | `600` | console requests per signed-in key per minute |
 | `TESSARIDB_S3_CONSOLE_OIDC_ISSUER` | unset (keys only) | an OpenID Connect provider for people (https, or http to this machine) |
-| `TESSARIDB_S3_CONSOLE_OIDC_CLIENT_ID` / `TESSARIDB_S3_CONSOLE_OIDC_CLIENT_SECRET` | — | the console's client at the provider |
+| `TESSARIDB_S3_CONSOLE_OIDC_CLIENT_ID` | — | the console's client at the provider |
+| `TESSARIDB_S3_CONSOLE_OIDC_CLIENT_SECRET` / `TESSARIDB_S3_CONSOLE_OIDC_CLIENT_KEY` | — | exactly one: a client secret, or (from 0.7.0) the path of an Ed25519 key in PKCS#8 PEM sent as a signed assertion (`private_key_jwt`, EdDSA); with a key the server logs its public JWK at start |
 | `TESSARIDB_S3_CONSOLE_OIDC_REDIRECT_URI` | — | exactly `<console address>/api/v1/auth/oidc/callback` |
 | `TESSARIDB_S3_CONSOLE_OIDC_MFA_AMR` | `mfa` | `amr` values that prove a second factor |
 | `TESSARIDB_S3_CONSOLE_BREAK_GLASS_WEBHOOK` | unset | where a root console sign-in is announced (needs the issuer) |

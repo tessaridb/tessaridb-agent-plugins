@@ -70,3 +70,4 @@ is then at `http://127.0.0.1:9443/admin/system/` (the trailing slash matters).
 - `tessaridb` — the store underneath: its users, TLS, snapshots and upgrades.
 - `tessaridb-oauth-cluster` — several servers on one store, regions with home-region redirects, and a
   TessariDB cluster under them.
+- `tessaridb-s3` — S3 storage whose console signs in through this server with a private key.

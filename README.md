@@ -16,18 +16,20 @@ section at the end shows both forms.
 
 | Plugin | What it does |
 |---|---|
-| `tessaridb` | Working with TessariDB and its family: five skills, listed below. No server; nothing to start. |
+| `tessaridb` | Working with TessariDB and its family: seven skills, listed below. No server; nothing to start. |
 | `tessaridb-agent-memory` | Memory for an agent, stored in TessariDB: registers the memory server and carries a skill that says when to reach for it, which tool fits which job, and how goals, tasks, checklists and releases are tracked. In Claude Code, a hook puts the session's `status` back into the context after every compaction — the memory session lives on the connection and survives it. |
 
-The `tessaridb` plugin carries five skills. The agent picks one from what you ask; you can also name
+The `tessaridb` plugin carries seven skills. The agent picks one from what you ask; you can also name
 it (`/tessaridb:tessaridb-s3` in Claude Code, `$tessaridb-s3` in Codex).
 
 | Skill | Use it for | Checked against |
 |---|---|---|
 | `tessaridb` | TessariQL, every engine (full text, vectors, geometry, graphs, key-value spaces, queues, topics, time series, vaults), transactions and history, the five clients, Kafka and RESP clients pointed at a node, security, running and backing up a node | TessariDB 0.38.2 |
 | `tessaridb-cluster` | standing up a cluster, replication and acknowledgement, leadership and failover, shards and placement, reads and routing, upgrades | TessariDB 0.36.1 |
-| `tessaridb-s3` | TessariDB S3 on one node: configuration, buckets and objects, users and keys, policies, encryption, notifications, lifecycle, the clients | TessariDB S3 0.2.1-beta |
+| `tessaridb-s3` | TessariDB S3 on one node: configuration, buckets and objects, users and keys, policies, encryption, notifications, lifecycle, the clients, console sign-in through TessariDB OAuth | TessariDB S3 0.2.1-beta; OAuth sign-in 0.7.0 |
 | `tessaridb-s3-cluster` | TessariDB S3 across nodes: erasure codes and zones, certificates, healing, layouts, joining nodes, regions | TessariDB S3 0.2.1-beta |
+| `tessaridb-oauth` | TessariDB OAuth on one server: configuration, operators and companies, registering applications, sign-in flows and tokens, the admin console, incidents, backup | TessariDB OAuth 0.1.0 |
+| `tessaridb-oauth-cluster` | TessariDB OAuth on several servers: one store behind a load balancer, regions with home-region redirects, the store on a TessariDB cluster | TessariDB OAuth 0.1.0 |
 | `tessarikv` | embedding the TessariKV engine in a Rust program: batches and durability, reads and snapshots, transactions, keyspaces and options, encryption, checkpoints | tessarikv 0.1.1 |
 
 The skills are plain Markdown: a `SKILL.md` that says when to use it and what to read, and a

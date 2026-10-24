@@ -18,12 +18,12 @@
     },
     {
       "name": "tessaridb",
-      "description": "Work with TessariDB: write TessariQL, design stores across its engines, connect the clients, run a node or a cluster, run TessariDB S3 alone or as an erasure-coded cluster, and embed the TessariKV engine, without the mistakes that succeed quietly.",
+      "description": "Work with TessariDB: write TessariQL, design stores across its engines, connect the clients, run a node or a cluster, run TessariDB S3 alone or as an erasure-coded cluster, run TessariDB OAuth on one server or across regions, and embed the TessariKV engine, without the mistakes that succeed quietly.",
       "author": {
         "name": "boogvar"
       },
       "category": "development",
-      "version": "0.7.1",
+      "version": "0.8.0",
       "source": "./plugins/tessaridb"
     }
   ]
