@@ -9,9 +9,9 @@ TessariKV is an embedded key-value engine (a log-structured merge tree) written 
 storage engine under TessariDB from 0.36. It is a **library**: no server, no protocol. Your program
 links it, opens a directory, and reads and writes byte-string keys.
 
-Checked against **`tessarikv` 0.1.0** from crates.io (Rust 1.89+, tokio): every example in these files
+Checked against **`tessarikv` 0.1.1** from crates.io (Rust 1.89+, tokio): every example in these files
 was compiled and run. From 0.1.0 the **on-disk format is stable**; the API may still change in a minor
-release before 1.0. Pin the version: `tessarikv = "=0.1.0"` or `"0.1"`.
+release before 1.0. Pin the version: `tessarikv = "=0.1.1"` or `"0.1"`.
 
 ## Pick the reference for the task
 

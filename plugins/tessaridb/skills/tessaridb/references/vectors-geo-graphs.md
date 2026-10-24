@@ -1,6 +1,6 @@
 # Vectors, geometry and graphs
 
-Checked against TessariDB 0.38.1. One record can carry text, a vector, a shape and links at once,
+Checked against TessariDB 0.38.2. One record can carry text, a vector, a shape and links at once,
 and one transaction writes all of them. Full detail:
 <https://docs.tessaridb.com/query-language/vectors>, `/geometry`, `/graphs`.
 
