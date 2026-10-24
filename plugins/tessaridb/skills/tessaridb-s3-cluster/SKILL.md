@@ -42,7 +42,10 @@ docker rm -f s3c-db s3c-s1 s3c-s2 s3c-s3; docker volume rm s3c-db s3c-s1 s3c-s2 
 1. **Pick k+m against what you must survive.** A write needs k shards durable (k + 1 when k = m); a
    read needs any k that verify. With m = 1 one node may be down; a second loss refuses both.
 2. **Give every node the same `TESSARIDB_S3_ERASURE` and `TESSARIDB_S3_CLUSTER_SECRET`** (≥ 32 bytes).
-   The secret decides placement; change it and nodes look for shards in the wrong places.
+   The secret decides placement; change it and nodes look for shards in the wrong places. From 0.8.0
+   the first node to start stores the code in the metadata store, and the secret too when
+   `TESSARIDB_S3_KEYS_PASSPHRASE` is set; the others may leave a stored one out and take it from
+   there, and a node whose environment names a different value is refused at start by name.
 3. **Name failure domains.** `TESSARIDB_S3_ZONE` per node, so a layout never puts more of one object's
    shards in a zone than m. Without it each node is its own zone.
 4. **One certificate per node, named `<node id>.peer.tessari-s3`**, from one authority, usable as server

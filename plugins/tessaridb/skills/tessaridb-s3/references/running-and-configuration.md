@@ -69,8 +69,9 @@ flight get that long. Give the container a longer stop period than that (the com
 
 ## Every setting
 
-The server reads only the environment. A missing required setting stops it at start, naming the
-setting. There is no configuration file and no default credential.
+The server reads the environment and, from 0.8.0, the settings stored in its metadata store (below). A
+missing required setting stops it at start, naming the setting. There is no configuration file and no
+default credential.
 
 ### Core
 
@@ -139,6 +140,29 @@ setting. There is no configuration file and no default credential.
 The cluster settings (`TESSARIDB_S3_ERASURE`, `_NODE_ID`, `_ZONE`, `_INTERNAL_*`, `_CLUSTER_SECRET`,
 `_FOUNDING_MEMBERS`, `_JOIN_TOKEN`, `_HEAL_INTERVAL_SECS`, `_MOVE_BYTES_PER_SEC`) are in the
 `tessaridb-s3-cluster` skill.
+
+## Settings kept in the metadata store (from 0.8.0)
+
+The settings every node of a region shares are stored the first time a node starts with them in its
+environment: in the `s3_settings` table and, when `TESSARIDB_S3_KEYS_PASSPHRASE` is set, the secrets
+(the root secret, the IAM key, the cluster secret, the console provider's secret and key, the
+break-glass webhook, the notification targets) in the `s3_secrets` vault under that passphrase.
+After that a node's environment needs only how to reach the store (the `_META_*` settings other than
+`_META_REPLICATION`), the region, the passphrase and what describes the machine (listen and advertise
+addresses, certificates, `_DATA_DIR`, node id and zone).
+
+- The stored value wins. An environment value that differs is logged by name; a different
+  `_ERASURE` or `_CLUSTER_SECRET` stops the start by name.
+- Without the passphrase, secrets are read from the environment and never stored.
+- A running node re-reads the stored settings every 5 seconds and applies the background intervals,
+  `_MOVE_BYTES_PER_SEC`, the console's rate limits and `_DOMAINS` without a restart; every other
+  setting is read at start.
+- Root changes them on the console's overview page or with `PUT /api/v1/settings/{name}`
+  `{value, expected, reason, passphrase?}` against the value it read (`GET /api/v1/settings`, a secret
+  by name only). Refusals: `setting_fixed` (erasure code, cluster secret), `setting_invalid` (the
+  node's own checks), `setting_changed` (someone changed it first; read again), `passphrase_required`.
+  Every attempt is in the action record without the value.
+- Going back to 0.7.0 reads every setting from the environment again: put them back first.
 
 ## Running the server without compose
 

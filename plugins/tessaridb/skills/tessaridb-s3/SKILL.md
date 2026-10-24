@@ -17,7 +17,9 @@ Checked against **TessariDB S3 0.2.1-beta** (image `tessaridb/s3:0.2.1-beta`, me
 `tessaridb/tessaridb:0.36.0`) and the client/CLI **0.2.0**. It is beta: where a feature is missing the
 server says `NotImplemented` rather than doing something close.
 The console's sign-in through TessariDB OAuth with a private key (`TESSARIDB_S3_CONSOLE_OIDC_CLIENT_KEY`) was
-checked against **TessariDB S3 0.7.0**, TessariDB OAuth 0.1.0 and TessariDB 0.38.2.
+checked against **TessariDB S3 0.7.0**, TessariDB OAuth 0.1.0 and TessariDB 0.38.2. Settings and secrets
+kept in the metadata store, re-read while running and changed in the console were checked against
+**TessariDB S3 0.8.0** and TessariDB 0.38.3.
 
 ## Pick the reference for the task
 
