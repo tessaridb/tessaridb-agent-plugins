@@ -1,0 +1,5 @@
+interface:
+  display_name: "TessariDB OAuth"
+  short_description: "Run TessariDB OAuth and sign users in to your applications"
+  brand_color: "#D9A733"
+  default_prompt: "Use $tessaridb-oauth to register this application and add sign-in with PKCE."
