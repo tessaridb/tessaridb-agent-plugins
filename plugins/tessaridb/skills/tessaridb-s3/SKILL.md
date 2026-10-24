@@ -19,7 +19,7 @@ server says `NotImplemented` rather than doing something close.
 The console's sign-in through TessariDB OAuth with a private key (`TESSARIDB_S3_CONSOLE_OIDC_CLIENT_KEY`) was
 checked against **TessariDB S3 0.7.0**, TessariDB OAuth 0.1.0 and TessariDB 0.38.2. Settings and secrets
 kept in the metadata store, re-read while running and changed in the console were checked against
-**TessariDB S3 0.8.0** and TessariDB 0.38.3.
+**TessariDB S3 0.8.0** and TessariDB 0.38.4.
 
 ## Pick the reference for the task
 

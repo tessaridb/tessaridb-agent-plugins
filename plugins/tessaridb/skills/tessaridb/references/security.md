@@ -1,6 +1,6 @@
 # Users, authority, grants, TLS and encryption at rest
 
-Checked against TessariDB 0.38.3. Full detail: <https://docs.tessaridb.com/security/users>,
+Checked against TessariDB 0.38.4. Full detail: <https://docs.tessaridb.com/security/users>,
 `/security/authority`, `/security/grants`, `/security/encryption-in-transit`,
 `/security/encryption-at-rest`.
 
@@ -97,6 +97,10 @@ table there. Nobody can hand out an authority they don't hold.
   `POST /session` for a 12-hour token; `DELETE /session` hands it back.
 - Changing a user's password or role, or dropping them, kills their tokens on the next request.
 - `ALTER USER ada SET PASSWORD '…'` changes one thing at a time.
+- `ALTER USER ada SET LOCKED` takes access away and keeps everything else: sign-in is refused in the
+  words of a wrong password, an open session is refused on its next statement, tokens die, and their
+  consumers stop. `SET UNLOCKED` restores the same password, role and grants. Use it rather than a
+  password rotation or a drop when the access must come back. `INFO FOR USER` reports `locked`.
 
 ## TLS for clients
 
