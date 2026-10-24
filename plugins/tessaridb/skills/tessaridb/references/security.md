@@ -1,6 +1,6 @@
 # Users, authority, grants, TLS and encryption at rest
 
-Checked against TessariDB 0.38.2. Full detail: <https://docs.tessaridb.com/security/users>,
+Checked against TessariDB 0.38.3. Full detail: <https://docs.tessaridb.com/security/users>,
 `/security/authority`, `/security/grants`, `/security/encryption-in-transit`,
 `/security/encryption-at-rest`.
 
