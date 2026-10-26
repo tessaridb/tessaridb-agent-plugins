@@ -1,6 +1,6 @@
 # Functions and aggregates
 
-Checked against TessariDB 0.38.4; every name below answered on that build. The page with examples
+Checked against TessariDB 0.39.0; every name below answered on that build. The page with examples
 for each is <https://docs.tessaridb.com/reference/functions>.
 
 A call is an ordinary expression and stands wherever a value stands. Every name is
@@ -45,6 +45,7 @@ language can't already say it: there is no `array::contains` because `CONTAINS` 
 | `array::distinct(a)`, `array::sort(a)`, `array::reverse(a)`, `array::flatten(a)` | reshaped |
 | `array::join(a, sep)` | one string |
 | `array::slice(a, start, count)` | a part |
+| `array::at(a, i)` | the element at `i` (negative from the back), `none` outside — for a position held in a parameter |
 | `array::append(a, v)` | one more element (an array appended is one element) |
 | `array::concat(a, b)` | both arrays' elements |
 | `array::index_of(a, v)` | first position, or `none` |
@@ -54,7 +55,17 @@ language can't already say it: there is no `array::contains` because `CONTAINS` 
 
 `object::keys(o)` (sorted), `object::values(o)`, `object::len(o)`, `object::entries(o)` (pairs,
 name first), `object::has(o, name)` (present at all, even holding `none`), `object::merge(a, b)`
-(`b` wins).
+(`b` wins), `object::get(o, name)` (a field named by a value; `none` when absent).
+
+## A key's set or ranking (from 0.39.0)
+
+Read with a function over `GET k`, one statement each: `set::len(s)`, `set::union(a, b)`,
+`set::intersect(a, b)`, `set::difference(a, b)` (sets of members — a ranking is refused);
+`scores::score(r, m)` and `scores::rank(r, m)` (`none` when not ranked), `scores::range(r, start,
+stop)` (places, negative from the highest), `scores::between(r, low, high)` (scores; a `NONE` bound
+is open) — both answer `[[member, score], …]` lowest first — and `scores::union(a, b)`,
+`scores::intersect(a, b)` (scores added; the answer is a ranking `SET` can store). An absent key
+answers `NONE`; write `GET b ?? set []`.
 
 ## Numbers
 

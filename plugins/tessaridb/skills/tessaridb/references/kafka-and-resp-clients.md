@@ -1,6 +1,6 @@
 # Kafka and RESP clients
 
-Checked against TessariDB 0.38.4. A node can speak two protocols that existing applications already
+Checked against TessariDB 0.39.0. A node can speak two protocols that existing applications already
 use: the **Kafka protocol** and **RESP**, the protocol key-value servers and their client libraries
 speak. An application keeps its client library and its code and changes the address it connects to.
 Full detail: <https://docs.tessaridb.com/integrations/switching-a-client>,

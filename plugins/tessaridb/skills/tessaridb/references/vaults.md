@@ -1,6 +1,6 @@
 # Vaults: secrets the database can't read back
 
-Checked against TessariDB 0.38.4. Full detail: <https://docs.tessaridb.com/query-language/vaults>.
+Checked against TessariDB 0.39.0. Full detail: <https://docs.tessaridb.com/query-language/vaults>.
 
 A vault stores records whose `SECRET` fields are encrypted under a key derived from a passphrase.
 The key is in memory only while the process is unsealed; it is never written unwrapped, replicated

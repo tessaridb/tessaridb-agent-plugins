@@ -1,6 +1,6 @@
 # Every statement, one line each
 
-A quick lookup, checked against TessariDB 0.38.4. Each row links the reference that explains it.
+A quick lookup, checked against TessariDB 0.39.0. Each row links the reference that explains it.
 The full list with every clause is <https://docs.tessaridb.com/reference/statements>.
 
 There is no separate schema language, migration tool or admin API: defining a table, declaring a

@@ -1,6 +1,6 @@
 # Clients, the wire protocol and HTTP
 
-Checked against TessariDB 0.38.4 and clients 0.12.0. Each language has a page with its whole
+Checked against TessariDB 0.39.0 and clients 0.13.0. Each language has a page with its whole
 surface: <https://docs.tessaridb.com/clients/choosing>.
 
 ## The five clients
@@ -15,7 +15,7 @@ surface: <https://docs.tessaridb.com/clients/choosing>.
 
 All are Apache-2.0 with no runtime dependencies, written from the protocol specification and
 checked against one conformance corpus. A client's version is its own: what must match is the
-protocol **major** (1). Clients 0.12.0 speak protocol 1.6 and send newer frames only to a node that
+protocol **major** (1). Clients 0.13.0 speak protocol 1.6 and send newer frames only to a node that
 announces the minor that reads them.
 
 ## Connecting and asking
