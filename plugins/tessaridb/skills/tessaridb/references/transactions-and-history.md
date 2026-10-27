@@ -1,6 +1,6 @@
 # Transactions, scripts and history
 
-Checked against TessariDB 0.39.0. Full detail: <https://docs.tessaridb.com/query-language/transactions>
+Checked against TessariDB 0.39.1. Full detail: <https://docs.tessaridb.com/query-language/transactions>
 and `/query-language/paging-and-history`.
 
 ## A transaction

@@ -76,8 +76,9 @@ fn buffered() -> WriteOptions {
 - When compaction falls behind, writes slow and then stop (see keyspaces-and-options.md). With
   `WriteOptions::no_slowdown = true` a write fails `Error::WriteStalled` (retryable) instead of
   waiting.
-- If a log write or sync, a flush or a compaction fails, the database stops accepting writes;
-  `db.background_error()` returns the failure; reads go on; reopen to write again.
+- If a log write or sync, a flush or a manifest edit fails, the database stops accepting writes;
+  `db.background_error()` returns the failure; reads go on; reopen to write again. A failed
+  compaction does not stop writes (from 0.1.2): it removes the files it began and runs again later.
 
 ## Recovery after a crash
 

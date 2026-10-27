@@ -1,6 +1,6 @@
 # Clients, the wire protocol and HTTP
 
-Checked against TessariDB 0.39.0 and clients 0.13.0. Each language has a page with its whole
+Checked against TessariDB 0.39.1 and clients 0.13.0. Each language has a page with its whole
 surface: <https://docs.tessaridb.com/clients/choosing>.
 
 ## The five clients

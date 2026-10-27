@@ -50,8 +50,9 @@ Histograms (latest interval): `GetMicros`, `WriteMicros`.
 
 ## Watching for trouble
 
-- `db.background_error()` is `Some` once a log write, flush or compaction failed: writes refused
-  until reopen, reads work.
+- `db.background_error()` is `Some` once a log write, flush or manifest edit failed: writes refused
+  until reopen, reads work. A failed compaction is retried after a growing wait instead (from 0.1.2),
+  counted by `CompactionFailures`.
 - `db.oldest_snapshot()` far behind a new snapshot's `sequence()`: something holds an old snapshot.
 - `StallMicros` growing: compaction is behind.
 

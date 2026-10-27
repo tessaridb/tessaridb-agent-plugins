@@ -1,6 +1,6 @@
 # Troubleshooting: nothing, too little, too slow, or refused
 
-Checked against TessariDB 0.39.0. Start every investigation by running something, not by reasoning:
+Checked against TessariDB 0.39.1. Start every investigation by running something, not by reasoning:
 `EXPLAIN` the read, `INFO FOR TABLE` the table, and read the notes the answer carries.
 
 ## A read returned nothing

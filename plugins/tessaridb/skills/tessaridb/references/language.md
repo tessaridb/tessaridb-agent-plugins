@@ -1,6 +1,6 @@
 # TessariQL: the language
 
-Every example here was run against TessariDB 0.39.0 with a namespace and database already
+Every example here was run against TessariDB 0.39.1 with a namespace and database already
 selected. An example that is meant to be refused is marked `-- refused:` with the refusal's name.
 
 Contents: [Tenancy](#tenancy-namespace-database-table) · [Kinds of table](#kinds-of-table) ·
