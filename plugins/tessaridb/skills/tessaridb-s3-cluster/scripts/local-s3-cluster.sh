@@ -79,7 +79,7 @@ for n in s1 s2 s3; do
     -e TESSARIDB_S3_CLUSTER_SECRET="$CLUSTER_SECRET" -e TESSARIDB_S3_FOUNDING_MEMBERS=s1,s2,s3 \
     -e TESSARIDB_S3_INTERNAL_TLS_CERT=/certs/$n.pem -e TESSARIDB_S3_INTERNAL_TLS_KEY=/certs/$n.key \
     -e TESSARIDB_S3_INTERNAL_TLS_CA=/certs/ca.pem \
-    tessaridb/s3:0.8.0 > /dev/null
+    tessaridb/s3:0.8.1 > /dev/null
   p=$((p + 1))
 done
 

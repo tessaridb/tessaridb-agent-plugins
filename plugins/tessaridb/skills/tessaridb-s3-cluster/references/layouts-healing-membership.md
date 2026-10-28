@@ -1,6 +1,6 @@
 # Quorums, failures, healing, layouts and membership
 
-Checked against TessariDB S3 0.8.0 (on a 2+1 Docker cluster: one node stopped → reads and writes
+Checked against TessariDB S3 0.8.1 (on a 2+1 Docker cluster: one node stopped → reads and writes
 continued; two stopped → `503 SlowDown` on both; restart → the heal pass healed what was written while
 a node was down; a fourth node joined by token, a layout `[s1, s2, s4]` was staged and applied, and with
 `s2` and `s3` then stopped all four objects still read back intact from `s1` and `s4`). Upstream: <https://docs.tessaridb.com/s3/operating/clusters>.
@@ -56,10 +56,11 @@ verifies the shards whose node changes, switches the object, and removes the old
 reclaim grace has passed. Speed: `TESSARIDB_S3_MOVE_BYTES_PER_SEC` (32 MiB/s; `0` pauses). The cluster
 view counts objects still to move.
 
-Seen on 0.8.0: after writes refused below quorum (two of three nodes stopped), `moving.listed` stayed
-at 3 and the heal pass reported `at risk 2`, with the mover logging `0 shards readable` for those
-entries, while every object in the bucket read back intact. Judge a move by reading the objects, not
-by the count alone.
+Data no object holds (a write refused below quorum, or one cut short) is not moved and not counted
+from 0.8.1: after three PUTs refused with two of three nodes stopped and the layout `[s1, s2, s4]`
+applied, `moving.listed` went from 4 to 0 in 52 s and the heal backlog stayed at 0. On 0.8.0 the count
+stayed above zero until those entries' reclaim ran a day later, so a 0.8.0 cluster's move is judged by
+reading the objects back.
 
 ## Membership
 

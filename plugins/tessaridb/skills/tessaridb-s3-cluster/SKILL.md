@@ -11,7 +11,7 @@ shards and m parity shards, one per node of an **erasure set**; the placement is
 (buckets, versions, membership, layouts, the heal list) stay in TessariDB, which can be a cluster of
 its own.
 
-Checked against **TessariDB S3 0.8.0** with metadata on **TessariDB 0.38.3**: a three-node 2+1
+Checked against **TessariDB S3 0.8.1** with metadata on **TessariDB 0.38.3**: a three-node 2+1
 cluster in Docker (built by `scripts/local-s3-cluster.sh`) wrote through one node and read the same
 bytes through another; with one node stopped reads and writes went on; with two stopped both were
 refused `503 SlowDown`; after the restart the heal pass reported `examined 2, healed 2`; a fourth node

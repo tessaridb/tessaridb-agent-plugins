@@ -1,6 +1,6 @@
 # Standing up a TessariDB S3 cluster
 
-Checked against TessariDB S3 0.8.0 and TessariDB 0.38.3 (the steps below are what
+Checked against TessariDB S3 0.8.1 and TessariDB 0.38.3 (the steps below are what
 `scripts/local-s3-cluster.sh` runs; it was executed and an object round-tripped across nodes).
 Upstream: <https://docs.tessaridb.com/s3/operating/clusters>, `/s3/start/configuration`.
 
@@ -88,7 +88,7 @@ docker run -d --name s3c-s1 --network s3c --network-alias s1 -p 127.0.0.1:9100:9
   -e TESSARIDB_S3_CLUSTER_SECRET=… -e TESSARIDB_S3_FOUNDING_MEMBERS=s1,s2,s3 \
   -e TESSARIDB_S3_INTERNAL_TLS_CERT=/certs/s1.pem -e TESSARIDB_S3_INTERNAL_TLS_KEY=/certs/s1.key \
   -e TESSARIDB_S3_INTERNAL_TLS_CA=/certs/ca.pem \
-  tessaridb/s3:0.8.0
+  tessaridb/s3:0.8.1
 ```
 
 Add `TESSARIDB_S3_CONSOLE_LISTEN` on at least one node for the cluster view, and
