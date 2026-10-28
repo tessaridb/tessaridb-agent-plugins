@@ -8,12 +8,12 @@
   "plugins": [
     {
       "name": "tessaridb-agent-memory",
-      "description": "Agent memory on TessariDB: stand the store and the memory service up locally, register the memory server, and carry the skill that says how to use it.",
+      "description": "Agent memory on TessariDB: use the memory service on this machine or the hosted one at memory.tessaridb.cloud, register the memory server, and carry the skill that says how to use it.",
       "author": {
         "name": "boogvar"
       },
       "category": "productivity",
-      "version": "0.1.3",
+      "version": "0.2.0",
       "source": "./plugins/agent-memory"
     },
     {

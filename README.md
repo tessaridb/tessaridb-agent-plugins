@@ -129,13 +129,28 @@ than `0.1.1`: it told Codex where to send you back but not which port to wait on
 a random one. Update the plugin as above, or sign in once with
 `codex -c mcp_oauth_callback_port=39144 mcp login tessaridb-am`.
 
-The address is fixed: the plugin expects port **39142** on the local machine. If the container
-publishes a different port, register the server yourself instead of through the plugin:
+### On this machine, or hosted
+
+The plugin asks for two values, kept in `/config` with the plugin's options:
+
+| Option | On this machine (default) | Hosted |
+|---|---|---|
+| Memory endpoint | `http://127.0.0.1:39142/mcp` | `https://memory.tessaridb.cloud/mcp` |
+| Sign-in client | `claude-code` | `agent-memory` |
+
+A container that publishes another port is reached by setting the endpoint to
+`http://127.0.0.1:<port>/mcp`. The sign-in returns to port **39143**; Claude Code takes that port
+only as a fixed number, so to return to another one, register the server yourself instead of
+through the plugin:
 
 ```sh
-claude mcp add --transport http -s user --client-id claude-code --callback-port 39143 \
-  tessaridb-am http://127.0.0.1:<port>/mcp
+claude mcp add --transport http -s user --client-id claude-code --callback-port <port> \
+  tessaridb-am http://127.0.0.1:39142/mcp
 ```
+
+The hosted memory signs you in with a TessariDB Cloud account, and each account gets a memory of its
+own. Claude Code cannot finish that sign-in yet: it always returns to `localhost`, and the cloud's
+sign-in accepts only `127.0.0.1`.
 
 A server registered that way and the plugin's own are two entries for the same memory; keep one.
 

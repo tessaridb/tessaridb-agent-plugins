@@ -2,9 +2,9 @@
   "mcpServers": {
     "tessaridb-am": {
       "type": "http",
-      "url": "http://127.0.0.1:39142/mcp",
+      "url": "${user_config.endpoint}",
       "oauth": {
-        "clientId": "claude-code",
+        "clientId": "${user_config.client_id}",
         "callbackPort": 39143
       }
     }
