@@ -1,6 +1,6 @@
 # Recipes: common tasks, end to end
 
-Each recipe was run against TessariDB 0.39.1 on a fresh store with a namespace and database
+Each recipe was run against TessariDB 0.39.2 on a fresh store with a namespace and database
 selected. Adapt the names; keep the shape.
 
 ## A re-runnable schema script

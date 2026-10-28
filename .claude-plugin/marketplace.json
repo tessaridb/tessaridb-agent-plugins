@@ -23,7 +23,7 @@
         "name": "boogvar"
       },
       "category": "development",
-      "version": "0.10.1",
+      "version": "0.10.2",
       "source": "./plugins/tessaridb"
     }
   ]

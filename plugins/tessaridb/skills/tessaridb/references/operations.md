@@ -1,6 +1,6 @@
 # Running a node: serving, backups, the log, upgrades
 
-Checked against TessariDB 0.39.1. Full detail: <https://docs.tessaridb.com/operations/serving>,
+Checked against TessariDB 0.39.2. Full detail: <https://docs.tessaridb.com/operations/serving>,
 `/operations/backup-and-restore`, `/operations/bounding-the-log`, `/start/in-a-container`. For
 several nodes, use the tessaridb-cluster skill.
 
@@ -15,7 +15,7 @@ docker run -d --name tessaridb --restart unless-stopped --stop-timeout 30 \
   -p 9080:9080 -p 8000:8000 \
   -v tessaridb-data:/var/lib/tessaridb \
   -e TESSARIDB_INITIAL_USER=owner -e TESSARIDB_INITIAL_PASSWORD='choose-a-real-one' \
-  tessaridb/tessaridb:0.39.1
+  tessaridb/tessaridb:0.39.2
 ```
 
 | Variable | Default | Does |
@@ -30,7 +30,7 @@ docker run -d --name tessaridb --restart unless-stopped --stop-timeout 30 \
 | `TESSARIDB_UNSEAL_FOR` | `10m` | how long a vault unseal lasts |
 | `TESSARIDB_LOG`, `TESSARIDB_LOG_FORMAT` | `info`, text | log level and `json` output, to standard error |
 
-The image also runs one-off commands: `docker run --rm tessaridb/tessaridb:0.39.1 -e '<script>'`,
+The image also runs one-off commands: `docker run --rm tessaridb/tessaridb:0.39.2 -e '<script>'`,
 `--version`, or `--at host:port --user u` as a client.
 
 The binary does the same without a container:
@@ -103,6 +103,9 @@ follower that falls behind copies its leader's state instead.
 
 ## Upgrading
 
+- **0.39.2 runs on TessariKV 0.2.0, and the step is one-way.** The first 0.39.2 open stamps the
+  storage files with a newer format that 0.39.1 refuses, and 0.39.1 refuses a 0.39.2 snapshot too.
+  Take a snapshot with 0.39.1 before upgrading and restore it to go back.
 - **0.36.0 moved TessariDB onto its own storage engine, TessariKV.** A store written by 0.35.3 or
   earlier is refused by name and left untouched. Move it with a snapshot taken by the build that
   wrote it:

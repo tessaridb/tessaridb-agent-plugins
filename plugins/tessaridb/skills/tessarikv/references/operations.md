@@ -96,7 +96,7 @@ async fn open_sealed(root: [u8; 32]) -> tessarikv::Result<Db> {
 
 ## Upgrading and the file format
 
-- Each database records a **store format** (`1` in 0.1.0). A release reads its own and every earlier
+- Each database records a **store format** (`1` in 0.1.0, `4` from 0.2.0). A release reads its own and every earlier
   one, so a database written by 0.1.0 opens in later releases.
 - A database in a later store format is refused at open `UnsupportedFormat` (code
   `unsupported_format`, `Validation`), before anything is read; open it with the release that wrote it
@@ -104,6 +104,7 @@ async fn open_sealed(root: [u8; 32]) -> tessarikv::Result<Db> {
 - Opening stamps the opening release's format: moving forward is one-way. Checkpoint first, keep the
   copy until the new release has run.
 - A 0.0.x database (format 0) opens in 0.1.0; after that, 0.0.x no longer opens it.
+- A 0.1.x database opens in 0.2.0; after that, 0.1.x no longer opens it.
 
 ## Errors
 
