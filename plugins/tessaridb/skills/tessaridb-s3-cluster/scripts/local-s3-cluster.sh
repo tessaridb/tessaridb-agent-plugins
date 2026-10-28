@@ -43,7 +43,7 @@ chmod 644 certs/s?.key
 docker network create $NET > /dev/null
 docker run -d --name s3c-db --network $NET -v s3c-db:/var/lib/tessaridb \
   -e TESSARIDB_INITIAL_USER=owner -e TESSARIDB_INITIAL_PASSWORD="$OWNER_PW" \
-  tessaridb/tessaridb:0.36.1 > /dev/null
+  tessaridb/tessaridb:0.38.3 > /dev/null
 for _ in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15; do
   docker exec -e TESSARIDB_PASSWORD="$OWNER_PW" s3c-db \
     tessaridb --at 127.0.0.1:9080 --user owner -e 'RETURN 1;' > /dev/null 2>&1 && break
@@ -79,7 +79,7 @@ for n in s1 s2 s3; do
     -e TESSARIDB_S3_CLUSTER_SECRET="$CLUSTER_SECRET" -e TESSARIDB_S3_FOUNDING_MEMBERS=s1,s2,s3 \
     -e TESSARIDB_S3_INTERNAL_TLS_CERT=/certs/$n.pem -e TESSARIDB_S3_INTERNAL_TLS_KEY=/certs/$n.key \
     -e TESSARIDB_S3_INTERNAL_TLS_CA=/certs/ca.pem \
-    tessaridb/s3:0.2.1-beta > /dev/null
+    tessaridb/s3:0.8.0 > /dev/null
   p=$((p + 1))
 done
 

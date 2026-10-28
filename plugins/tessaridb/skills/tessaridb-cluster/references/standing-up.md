@@ -1,6 +1,6 @@
 # Standing up a cluster, and adding or removing a node
 
-Checked against TessariDB 0.36.1 by building a three-node cluster from nothing and joining a fourth
+Checked against TessariDB 0.39.2 by building a three-node cluster from nothing and joining a fourth
 node with a token. Upstream: <https://docs.tessaridb.com/cluster/adding-a-node> and
 `/security/encryption-in-transit`.
 
@@ -68,8 +68,9 @@ tessaridb /var/lib/tessaridb/store -f members.tessariql
   rows on different nodes collide.
 - `AT` is where **peers** dial (a host name or an address; a name is resolved on every dial).
   `CLIENTS AT` and `HTTP AT` are where clients are redirected; without them redirects name `AT`.
-  The clauses are read in order: `AT`, `CLIENTS AT`, `HTTP AT`, `NODE`, `ROLES`, `REPLICATES`,
-  `FINGERPRINT`, `LEADS`, `REGION` (a clause out of place is `UnexpectedToken`).
+  `KAFKA AT` is where Kafka clients are told to reach the node, on a node serving `--kafka`.
+  The clauses are read in order: `AT`, `CLIENTS AT`, `HTTP AT`, `KAFKA AT`, `NODE`, `ROLES`,
+  `REPLICATES`, `LEADS`, `FINGERPRINT`, `REGION` (a clause out of place is `UnexpectedToken`).
 - `writable` on every coordinating row, because the node that wins an election must be able to
   write; a row's roles are also what the node adopts at its next start.
 - Declaring the owner here closes each store; the user replicates with the store line.
@@ -96,7 +97,7 @@ handed to `tessaridb` as is:
 
 ```sh
 docker run -d --name db-1 -p 9080:9080 -p 9000:9000 -v db1:/var/lib/tessaridb \
-  -v /etc/tessaridb/cluster:/run/cluster:ro tessaridb/tessaridb:0.36.1 \
+  -v /etc/tessaridb/cluster:/run/cluster:ro tessaridb/tessaridb:0.39.2 \
   /var/lib/tessaridb/store --serve 0.0.0.0:9080 --http 0.0.0.0:8000 \
   --cluster-credential /run/cluster/peer.pem --cluster-key /run/cluster/peer.key \
   --cluster-authority /run/cluster/ca.pem --cluster-address 0.0.0.0:9000 \

@@ -1,6 +1,6 @@
 # Standing up a TessariDB S3 cluster
 
-Checked against TessariDB S3 0.2.1-beta and TessariDB 0.36.1 (the steps below are what
+Checked against TessariDB S3 0.8.0 and TessariDB 0.38.3 (the steps below are what
 `scripts/local-s3-cluster.sh` runs; it was executed and an object round-tripped across nodes).
 Upstream: <https://docs.tessaridb.com/s3/operating/clusters>, `/s3/start/configuration`.
 
@@ -88,7 +88,7 @@ docker run -d --name s3c-s1 --network s3c --network-alias s1 -p 127.0.0.1:9100:9
   -e TESSARIDB_S3_CLUSTER_SECRET=… -e TESSARIDB_S3_FOUNDING_MEMBERS=s1,s2,s3 \
   -e TESSARIDB_S3_INTERNAL_TLS_CERT=/certs/s1.pem -e TESSARIDB_S3_INTERNAL_TLS_KEY=/certs/s1.key \
   -e TESSARIDB_S3_INTERNAL_TLS_CA=/certs/ca.pem \
-  tessaridb/s3:0.2.1-beta
+  tessaridb/s3:0.8.0
 ```
 
 Add `TESSARIDB_S3_CONSOLE_LISTEN` on at least one node for the cluster view, and
@@ -108,4 +108,5 @@ Add `TESSARIDB_S3_CONSOLE_LISTEN` on at least one node for the cluster view, and
 |---|---|
 | `node s4 is not an admitted member presenting this certificate: approve it in the console, name it in TESSARIDB_S3_FOUNDING_MEMBERS on a new cluster, or start it with a join token issued for it` | a node nobody admitted |
 | `TESSARIDB_S3_INTERNAL_TLS_CERT is invalid: issued for another node than TESSARIDB_S3_NODE_ID` | the wrong certificate file for this id |
+| a data directory written under another layout (from 0.6.0, per the release notes) | the node's `TESSARIDB_S3_DATA_DIR` belongs to another cluster or node |
 | a missing required setting, by name | `TESSARIDB_S3_ERASURE` needs the node id, internal listen/advertise, the cluster secret, the internal TLS trio and the data directory |

@@ -23,14 +23,15 @@ Then start each region's servers with:
 | `PEER_USER`, `PEER_PASSWORD` | the account above; required with `PEERS` |
 | `PEER_AUTHORITY` | the authority the other stores' certificates are checked against |
 
-## What happens (checked on OAuth 0.1.0, TessariDB 0.38.2, two regions)
+## What happens (checked on OAuth 0.3.0, TessariDB 0.39.2, two regions)
 
 - A server reads every other region's directory every five seconds. A company created in `us` was
-  redirected from `eu` 1.3 s after it was made.
+  redirected from `eu` 1.3 s after it was made (measured on OAuth 0.1.0).
 - A request for a company another region serves answers `307 Temporary Redirect` to the same path and
   query at that region's `PUBLIC_URL`; a `POST` is redirected `307` too, so its body is sent again.
 - A company no region serves is `404`. The admin console is not redirected (another region's company
   answers `404` there).
-- With the `us` store down, `eu` kept the companies `us` last named and logged a `WARN` with
-  `peer-directories` and `category=Unavailable`.
+- With a peer's directory unreadable, a server kept the companies that region last named and logged a
+  `WARN` (`a peer region's directory was not read; its last entries are kept`, `peer-directories`,
+  `category=Unavailable`).
 - A server whose `PEERS` names its own region refused to start, naming the variable.

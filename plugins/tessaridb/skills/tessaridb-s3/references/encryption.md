@@ -1,6 +1,6 @@
 # Server-side encryption and the keys vault
 
-Checked against TessariDB S3 0.2.1-beta (the two commands below ran: the object answered
+Checked against TessariDB S3 0.8.0 (the two commands below ran: the object answered
 `ServerSideEncryption: AES256`, the bucket default read back). Upstream: <https://docs.tessaridb.com/s3/data-and-access/encryption>.
 
 Each sealed object's data is encrypted in blocks under a data key of its own; that data key is

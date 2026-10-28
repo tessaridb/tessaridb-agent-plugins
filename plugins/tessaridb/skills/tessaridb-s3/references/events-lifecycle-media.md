@@ -1,7 +1,8 @@
 # Notifications, lifecycle rules and media renditions
 
-Checked against TessariDB S3 0.2.1-beta (the notification and lifecycle configurations below were
-accepted by a running server, and an upload under `2026/…jpg` appeared in the topic). Upstream: <https://docs.tessaridb.com/s3/data-and-access/events-lifecycle-media>.
+Checked against TessariDB S3 0.8.0 (the notification and lifecycle configurations below were
+accepted by a running server, an upload under `2026/…jpg` appeared in the topic, and the media rules
+below made the three image renditions of an upload). Upstream: <https://docs.tessaridb.com/s3/data-and-access/events-lifecycle-media>.
 
 All three run through TessariDB: events through a topic, lifecycle and media through queues that hand
 each piece of work to one node at a time.
@@ -71,13 +72,32 @@ Transitions and tag or size filters → `NotImplemented`.
 ## Media renditions
 
 A bucket's **media rules** (set in the console, `GET/PUT /api/v1/buckets/{bucket}/media`) say which
-content types under which prefix get which renditions.
+content types under which prefix get which renditions. Each output is spelled `kind/size/format`:
 
-- Images and poster frames are fitted into the listed sizes (150–3840 px), never enlarged, as JPEG,
-  PNG, WebP or AVIF.
-- Videos become MP4 (H.264 High, AAC) or WebM (VP9, Opus) with the shorter side at the listed height
-  (360p–2160p), never enlarged.
-- Renditions are ordinary objects under `<key>.renditions/`; a rendition never gets renditions.
+```json
+{"rules":[{"id":"pics","content_types":["image/*"],"prefix":"pics/",
+           "outputs":["image/1280/webp","image/400x400-cover/avif@60","image/300x200-exact/jpeg@80"]},
+          {"id":"clips","content_types":["video/*"],"prefix":"clips/",
+           "outputs":["poster/640/jpeg","video/360p+720p/hls"]}],
+ "version":1}
+```
+
+- `image` and `poster` (a video's frame): a side of 16–7680 px, or a box `WxH` the picture is fitted
+  inside (`-fit`, the default), covers from the middle (`-cover`) or is stretched to (`-exact`);
+  JPEG, PNG, WebP or AVIF, with `@<1-100>` quality on the lossy ones. Never enlarged. A photo is
+  turned upright by its EXIF orientation first, and no rendition carries the original's metadata.
+- `video/<height>p/mp4|webm`: MP4 (H.264 High, AAC) or WebM (VP9, Opus), the shorter side at 360p,
+  480p, 720p, 1080p, 1440p or 2160p, never enlarged.
+- `video/360p+720p/hls`: one H.264 rendition per height in six-second segments under a master
+  playlist, each file an object beside the original.
+- An output a rule's content types can't all make, or a size out of range, is refused
+  `invalid_media` with the reason. A save carries the `version` it read; one made over someone
+  else's change is refused `412 stale_media` and changes nothing.
+- Renditions are ordinary objects under `<key>.renditions/` (`image-400x400-cover-q60.avif`); a
+  rendition never gets renditions.
+- Objects already in the bucket get renditions by a sweep (`POST /api/v1/buckets/{bucket}/media/sweep`,
+  progress at `GET` of the same route; the console's button), which skips a rendition made since its
+  original.
 - Workers per node: `TESSARIDB_S3_MEDIA_WORKERS` (2). Video needs `TESSARIDB_S3_FFMPEG` on that node
   (the image carries none); a video task is stopped after 50 minutes.
 - A failed task is retried after a growing wait and listed in the console after five tries

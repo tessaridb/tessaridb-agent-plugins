@@ -1,6 +1,6 @@
 # Users, keys, grants, policies and the console API
 
-Checked against TessariDB S3 0.2.1-beta (the console API sequence below was sent to a running server:
+Checked against TessariDB S3 0.8.0 (the console API sequence below was sent to a running server:
 sign in as root, create a user, issue its key, grant a bucket read-only, then the user's key listed the
 bucket and was refused `AccessDenied` on `PutObject` and `CreateBucket`). Upstream:
 <https://docs.tessaridb.com/s3/data-and-access/access>, `/s3/data-and-access/security`,
@@ -94,8 +94,8 @@ Bytes and objects per bucket, checked on every write that adds, against the last
 ## Block Public Access
 
 A bucket that set nothing has every switch on: a public policy is refused, and a public policy's
-Allows reach only the bucket's own space. `DeletePublicAccessBlock` turns it off. ACLs are never
-honoured.
+Allows reach only the bucket's own space. `DeletePublicAccessBlock` turns it off. ACLs grant
+nothing: a write is taken only as `private` or `bucket-owner-full-control`.
 
 ## CORS and browser uploads
 
@@ -136,6 +136,7 @@ The answer is an access key, a secret and a session token, valid 15 minutes to 1
 default). Every request sends the token as `x-amz-security-token`. They end at expiry, when the
 identity is unlinked, when the user is disabled, or at a provider logout. An optional `Policy`
 (≤ 2 048 characters, S3 resources only) narrows them and never grants more than the user has.
+The exchange answers a request from another machine only over TLS (from 0.6.0).
 
 ## The console's sign-in modes
 

@@ -1,6 +1,6 @@
 # Shards, placement and transactions across leaders
 
-Checked against TessariDB 0.36.1 (on a local three-node cluster: a table split at `'m'`, shard 2
+Checked against TessariDB 0.39.2 (on a local three-node cluster: a table split at `'m'`, shard 2
 placed on a second node, which was elected for it; a transaction writing both shards refused
 without `COMMIT ACROSS LEADERS` and committed with it). Upstream:
 <https://docs.tessaridb.com/cluster/splitting-a-table>, `/cluster/who-leads-what`,

@@ -10,9 +10,11 @@ account pages its users see, and on a listener of its own an admin console. Comp
 codes, grants, consents, sessions, sealed signing keys, request counters and the audit trail are records
 in a TessariDB store; the server keeps nothing else. Company `acme` is the issuer `<PUBLIC_URL>/acme`.
 
-Checked against **TessariDB OAuth 0.1.0**, the first release, in alpha (image `tessaridb/oauth:0.1.0`,
-linux/amd64 and linux/arm64), on **TessariDB 0.38.2**. The configuration and the HTTP surface may still
-change in a minor release before 1.0, so pin the image tag.
+Checked against **TessariDB OAuth 0.3.0** (image `tessaridb/oauth:0.3.0`, linux/amd64 and linux/arm64)
+on **TessariDB 0.39.2**: started as in the compose file below, an operator enrolled with an
+authenticator app and signed in to the console, clients registered with and without a sector, a user
+signed in with PKCE, and a service called the admin API with a signed assertion. The configuration and
+the HTTP surface may still change in a minor release before 1.0, so pin the image tag.
 
 ## Pick the reference for the task
 
@@ -54,8 +56,9 @@ is then at `http://127.0.0.1:9443/admin/system/` (the trailing slash matters).
    revokes the refresh family the first one started.
 6. **An access token is addressed to one resource** (`aud`), lives five minutes and is never recalled;
    revoking a grant stops it within those five minutes. Check `aud` at every resource server.
-7. **`sub` is pairwise per client.** Two applications see different identifiers for the same user; do
-   not join users across applications by `sub`.
+7. **`sub` is pairwise per client, or per sector.** Two applications see different identifiers for the
+   same user unless both were registered with the same `sector` (from 0.2.0); do not join users across
+   sectors by `sub`.
 8. **Behind a proxy, list it in `TRUSTED_PROXIES`.** Otherwise every client is counted as the proxy and
    one client's failed sign-ins hold everybody's.
 9. **The admin console needs its own origin** (`ADMIN_URL`, https or a loopback http) and two-factor

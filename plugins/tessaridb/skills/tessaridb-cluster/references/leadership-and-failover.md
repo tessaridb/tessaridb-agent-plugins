@@ -1,8 +1,9 @@
 # Leadership, leases and failover
 
-Checked against TessariDB 0.36.1 (a leader killed with `kill -9` on a local three-node cluster: a
-survivor took writes 1.22 s later under the next epoch; the old leader restarted with the same flags
-and caught up as a follower). Upstream: <https://docs.tessaridb.com/cluster/leadership-and-failover>.
+Checked against TessariDB 0.39.2 (a leader killed with `kill -9` on a local three-node cluster: a
+survivor took writes 0.54 s later under the next epoch; the old leader restarted with the same flags
+and caught up as a follower; all three nodes stopped and started together, and a write was taken
+1.1 s after the start). Upstream: <https://docs.tessaridb.com/cluster/leadership-and-failover>.
 
 ## How a node comes to write
 
@@ -34,6 +35,8 @@ cannot follow"): connect it to the leader (`INFO FOR NODE` → `cluster.leaders`
 A write sent to a node that may not write at all is **carried** to the leader over the peer link
 for callers that can't follow (old wire clients, HTTP), under a signed assertion, one hop only, and
 never for statements that change users, grants, membership, the failover policy, backups or vaults.
+Those are **redirected** instead (from 0.38.3): a client that follows redirects is sent to the
+leader, so a user or grant can be declared through any node.
 
 ## The failover policy
 

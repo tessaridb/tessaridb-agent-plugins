@@ -1,9 +1,9 @@
 # Quorums, failures, healing, layouts and membership
 
-Checked against TessariDB S3 0.2.1-beta (on a 2+1 Docker cluster: one node stopped → reads and writes
-continued; two stopped → `503 SlowDown` on both; restart → the heal pass healed the object written while
+Checked against TessariDB S3 0.8.0 (on a 2+1 Docker cluster: one node stopped → reads and writes
+continued; two stopped → `503 SlowDown` on both; restart → the heal pass healed what was written while
 a node was down; a fourth node joined by token, a layout `[s1, s2, s4]` was staged and applied, and with
-`s2` and `s3` then stopped all six objects still read back intact from `s1` and `s4`). Upstream: <https://docs.tessaridb.com/s3/operating/clusters>.
+`s2` and `s3` then stopped all four objects still read back intact from `s1` and `s4`). Upstream: <https://docs.tessaridb.com/s3/operating/clusters>.
 
 ## What a failure does
 
@@ -55,6 +55,11 @@ After an apply, each member moves objects written under an older layout onto it:
 verifies the shards whose node changes, switches the object, and removes the old shards once the
 reclaim grace has passed. Speed: `TESSARIDB_S3_MOVE_BYTES_PER_SEC` (32 MiB/s; `0` pauses). The cluster
 view counts objects still to move.
+
+Seen on 0.8.0: after writes refused below quorum (two of three nodes stopped), `moving.listed` stayed
+at 3 and the heal pass reported `at risk 2`, with the mover logging `0 shards readable` for those
+entries, while every object in the bucket read back intact. Judge a move by reading the objects, not
+by the count alone.
 
 ## Membership
 

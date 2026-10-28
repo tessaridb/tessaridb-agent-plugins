@@ -46,7 +46,7 @@ the server's account its first (owner) account and serves its wire port over TLS
 ```yaml
 services:
   tessaridb:
-    image: tessaridb/tessaridb:0.38.2
+    image: tessaridb/tessaridb:0.39.2
     restart: unless-stopped
     volumes:
       - tessaridb-data:/var/lib/tessaridb
@@ -59,7 +59,7 @@ services:
       TESSARIDB_TLS_KEY: /keys/store.key
 
   oauth:
-    image: tessaridb/oauth:0.1.0
+    image: tessaridb/oauth:0.3.0
     restart: unless-stopped
     depends_on: [tessaridb]
     ports:

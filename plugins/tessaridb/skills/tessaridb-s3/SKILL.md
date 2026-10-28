@@ -13,13 +13,11 @@ work against it. It keeps state in two places on purpose:
 - **Bytes on the drives**: object data is written in 1 MiB blocks under `TESSARIDB_S3_DATA_DIR`,
   each block with a BLAKE3 hash checked on every read. Bytes never enter the database.
 
-Checked against **TessariDB S3 0.2.1-beta** (image `tessaridb/s3:0.2.1-beta`, metadata on
-`tessaridb/tessaridb:0.36.0`) and the client/CLI **0.2.0**. It is beta: where a feature is missing the
-server says `NotImplemented` rather than doing something close.
+Checked against **TessariDB S3 0.8.0** (image `tessaridb/s3:0.8.0`, metadata on
+`tessaridb/tessaridb:0.38.3`, the repository's compose file) and the client/CLI **0.2.1**. Where a
+feature is missing the server says `NotImplemented` rather than doing something close.
 The console's sign-in through TessariDB OAuth with a private key (`TESSARIDB_S3_CONSOLE_OIDC_CLIENT_KEY`) was
-checked against **TessariDB S3 0.7.0**, TessariDB OAuth 0.1.0 and TessariDB 0.38.2. Settings and secrets
-kept in the metadata store, re-read while running and changed in the console were checked against
-**TessariDB S3 0.8.0** and TessariDB 0.38.4.
+checked against **TessariDB S3 0.7.0**, TessariDB OAuth 0.1.0 and TessariDB 0.38.2.
 
 ## Pick the reference for the task
 
@@ -64,10 +62,11 @@ Prove a claim by sending the request and reading the answer: the server's refusa
    node that loses that key can open no user's key. Keep it like the root secret.
 5. **Put TLS in front of both listeners** (or give each its certificate) before exposing them; a
    console sign-in otherwise sends a secret in the clear.
-6. **Unknown operations are refused, never approximated.** ACLs, website configuration, lifecycle
+6. **Unknown operations are refused, never approximated.** Website configuration, lifecycle
    transitions and a few others answer `NotImplemented`; plan around that instead of retrying.
 7. **A bucket that set nothing blocks public access.** A public policy is refused until
-   `DeletePublicAccessBlock` turns the block off. ACLs are never honoured.
+   `DeletePublicAccessBlock` turns the block off. ACLs grant nothing: a read answers the owner's
+   `FULL_CONTROL`, and a write is taken only as `private` or `bucket-owner-full-control`.
 8. **Versioning is one-way.** Never versioned → Enabled ↔ Suspended, never back. In an enabled bucket
    a delete adds a marker; removing the marker by id brings the object back.
 9. **Object Lock is enforced everywhere.** A kept version cannot be deleted or rewritten by any path,

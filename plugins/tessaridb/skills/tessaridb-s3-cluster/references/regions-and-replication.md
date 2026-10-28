@@ -1,7 +1,7 @@
 # Regions, bucket replication and region failover
 
-Checked against TessariDB S3 0.2.1-beta (documentation and the server's own route table; not run on
-two regions here). Upstream: <https://docs.tessaridb.com/s3/operating/clusters#regions>.
+Checked against TessariDB S3 0.8.0 (documentation and the server's own route table; not run on two
+regions here). Upstream: <https://docs.tessaridb.com/s3/operating/clusters#regions>.
 
 ## A region
 

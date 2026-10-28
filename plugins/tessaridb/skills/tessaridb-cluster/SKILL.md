@@ -10,10 +10,11 @@ replicate data with**. There is no coordinator process and no config file to kee
 membership is catalog records (`DEFINE REPLICA`), the failover policy is a replicated statement
 (`DEFINE FAILOVER`), and everything is a statement you can script and review.
 
-Checked against **TessariDB 0.36.1** on a local three-node cluster: forming it, writing and reading
-through followers, a leader killed with `kill -9` (a survivor took writes 1.2 s later), the old
-leader rejoining, a placed shard leader, a transaction across leaders, and a fourth node joining with
-a token. Upstream reference: <https://docs.tessaridb.com/cluster/what-a-cluster-is>.
+Checked against **TessariDB 0.39.2** on a local three-node cluster: forming it, writing and reading
+through followers, a leader killed with `kill -9` (a survivor took writes 0.54 s later), the old
+leader rejoining, all three nodes stopped and started together (a write was taken 1.1 s after the
+start), a placed shard leader, a transaction across leaders, a fourth node joining with a token, and
+a Python client 0.13.0 creating a record and a user through a follower. Upstream reference: <https://docs.tessaridb.com/cluster/what-a-cluster-is>.
 
 ## Pick the file for the task
 
@@ -65,7 +66,8 @@ votes on who leads next. A cluster nobody placed anything on has one line, the s
    can't ask for less unless the namespace says `… OR WEAKER`.
 6. **Tell the two refusals apart:** "holds no leadership" means *wait* (an election is running);
    "this range is led by another node: write it at …" means *go there*. Clients from 0.7 follow the
-   second automatically; the `tessaridb` command line can't, so point it at the leader.
+   second automatically, users and grants included (from 0.38.3); the `tessaridb` command line
+   can't, so point it at the leader.
 7. **`NotAcknowledgedInTime` means the write IS committed** on the leader; retry only with a write
    that says the same thing twice (`UPSERT`, a known id).
 8. **A newcomer joining a running cluster declares no membership**, only its own roles, and a node
@@ -81,7 +83,7 @@ votes on who leads next. A cluster nobody placed anything on has one line, the s
     versions that stay on disk and vanish from every answer.
 13. **Upgrade one minor release at a time, followers first, the store leader last**, and turn on new
     features only after the last node runs the new release. Crossing 0.35 → 0.36 is not rolling: every
-    store is moved with a snapshot.
+    store is moved with a snapshot. 0.39.2 can't be rolled back by starting 0.39.1 again: snapshot first.
 
 ## Check before you trust it
 

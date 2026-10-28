@@ -23,6 +23,7 @@ An operator holding `clients` registers it in the console or with
   "dpop_bound_access_tokens": false,
   "post_logout_redirect_uris": ["https://reports.example.com/"],
   "backchannel_logout_uri": "https://reports.example.com/backchannel-logout",
+  "sector": "reports-suite",
   "reason": "reports goes live"
 }
 ```
@@ -32,6 +33,10 @@ An operator holding `clients` registers it in the console or with
 - A client redeems only the grant types it registered. `client_credentials` needs a confidential client.
 - `resources` are the audiences its access tokens may name. A client that calls UserInfo lists
   `<issuer>/oauth2/userinfo` among them and asks for it as `resource`.
+- `sector` (from 0.2.0, optional): clients registered with the same sector see a person as one `sub`,
+  so the applications of one product agree on who a user is; a client without one keeps a `sub` of
+  its own. Measured: two clients of one sector got the same `sub` for a user, a third without a
+  sector got another.
 - Changing a client is not in the console yet: remove it and register it again.
 
 ## The browser flow: authorization code with PKCE

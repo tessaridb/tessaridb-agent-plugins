@@ -1,6 +1,6 @@
 # Running TessariDB S3 and configuring it
 
-Checked against TessariDB S3 0.2.1-beta (the repository's `compose.yaml` started with
+Checked against TessariDB S3 0.8.0 (the repository's `compose.yaml` started with
 `docker compose up -d --wait`, then bucket, upload, listing, versioning and refusals sent with the AWS
 CLI). Upstream: <https://docs.tessaridb.com/s3/start/running>, `/s3/start/configuration`.
 
@@ -33,7 +33,7 @@ docker compose up -d --wait
 
 What happens:
 
-1. The database (`tessaridb/tessaridb:0.36.0`) declares its owner from `.env` and is reachable only
+1. The database (`tessaridb/tessaridb:0.38.3`) declares its owner from `.env` and is reachable only
    from the S3 server over the compose network.
 2. A one-shot `s3-account` step signs in as the owner once and declares the namespace `s3`, the
    database `meta` and the server's account `s3`, an editor of `s3.meta` only.
@@ -60,7 +60,8 @@ aws s3api put-bucket-versioning --bucket first --versioning-configuration Status
 ```
 
 What a wrong request answers (measured): a bad secret → `SignatureDoesNotMatch`; an unsigned
-`GET /first/` → `403`; `get-bucket-acl` → `NotImplemented`.
+`GET /first/` → `403`; `put-bucket-acl --acl public-read` → `AccessControlListNotSupported`;
+`get-bucket-website` → `NotImplemented`.
 
 ## Stopping
 
@@ -86,6 +87,7 @@ default credential.
 | `TESSARIDB_S3_MAX_INFLIGHT` | `1024` | requests served at once before `503 SlowDown` |
 | `TESSARIDB_S3_SHUTDOWN_GRACE_SECS` | `30` | in-flight grace after SIGTERM |
 | `TESSARIDB_S3_DATA_DIR` | required | where object bytes go (`<dir>/s3data/…`) |
+| `TESSARIDB_S3_DATA_MIN_FREE_BYTES` | `1073741824` (1 GiB) | below this much free space on the data drive, writes answer `503 ServiceUnavailable` and reads are still served |
 | `TESSARIDB_S3_ADVERTISE` | unset | the URL this node's S3 surface is reached at, recorded as where replicas are sent |
 
 ### The metadata store
@@ -166,7 +168,7 @@ addresses, certificates, `_DATA_DIR`, node id and zone).
 
 ## Running the server without compose
 
-Any TessariDB 0.36 node works as the metadata store. Declare the namespace, the database and the
+Use the TessariDB release the S3 release notes name as the metadata store (`0.38.3` for 0.8.0). Declare the namespace, the database and the
 server's account once, as the owner. These are the statements the compose file's `s3-account` step
 runs (`docker/s3-account.sh`); every one is re-runnable:
 

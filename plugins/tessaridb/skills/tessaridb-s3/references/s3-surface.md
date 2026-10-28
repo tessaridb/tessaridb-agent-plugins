@@ -1,6 +1,6 @@
 # The S3 surface: operations, versioning, Object Lock, multipart
 
-Checked against TessariDB S3 0.2.1-beta. Upstream: <https://docs.tessaridb.com/s3/start/compatibility>.
+Checked against TessariDB S3 0.8.0. Upstream: <https://docs.tessaridb.com/s3/start/compatibility>.
 
 Requests are dispatched by operation name. An operation the server does not implement answers
 `NotImplemented`; an unknown or misplaced parameter is refused before any operation runs. Each of
@@ -30,6 +30,7 @@ the 116 operations of the S3 model is signed, sent and answered in the server's 
 | `Get/Put/DeleteBucketPolicy` `GetBucketPolicyStatus` | evaluated on every request |
 | `Get/Put/DeletePublicAccessBlock` | every switch on for a bucket that set none |
 | `Get/Put/DeleteBucketCors` | up to 100 rules; preflights answered without credentials |
+| `Get/PutBucketAcl` `Get/PutObjectAcl` | a read answers the owner's `FULL_CONTROL`; a write is taken only as `private` or `bucket-owner-full-control` and changes nothing (anything else `AccessControlListNotSupported`); `CreateBucket` refuses ACLs granting others and ownership other than `BucketOwnerEnforced` |
 
 ## Objects
 
@@ -38,7 +39,8 @@ the 116 operations of the S3 model is signed, sent and answered in the server's 
 | `PutObject` | up to 5 GiB; payload hash and checksums verified first; SSE-S3, SSE-KMS, SSE-C |
 | POST object | a browser form to `POST /{bucket}` under a signed policy |
 | `GetObject` `HeadObject` | ranges, `partNumber`, `versionId` |
-| `CopyObject` | up to 5 GiB, COPY or REPLACE metadata, copy-source conditions, checksum recomputed |
+| `CopyObject` | up to 5 GiB, COPY or REPLACE metadata, copy-source conditions, checksum recomputed; a named source version (`?versionId=`) is answered in `x-amz-copy-source-version-id`, a named delete marker refused |
+| `GetObjectAttributes` | ETag, stored checksum and its type, a multipart object's parts (paged), storage class and size, of a version or the current one |
 | `DeleteObject` `DeleteObjects` | with `versionId`, removes that version for good |
 | `ListObjectsV2` `ListObjects` | byte order, delimiter roll-up, authenticated tokens, `encoding-type=url` |
 | `ListObjectVersions` | keys in byte order, each key newest first with `IsLatest` |
@@ -51,7 +53,7 @@ Over 5 GiB use multipart.
 
 | operations | notes |
 |---|---|
-| `CreateMultipartUpload` `UploadPart` `UploadPartCopy` | part copy from a range or all of a source |
+| `CreateMultipartUpload` `UploadPart` `UploadPartCopy` | part copy from a range or all of a source, of a named version; Object Lock headers on the create are kept by the completed version |
 | `ListParts` `ListMultipartUploads` | key and upload-id markers, delimiter roll-up |
 | `CompleteMultipartUpload` | multipart ETag, full-object or composite checksum |
 | `AbortMultipartUpload` | uploads open longer than `TESSARIDB_S3_UPLOAD_MAX_AGE_SECS` (a week) are aborted by the reaper |
@@ -74,12 +76,14 @@ aws s3api list-object-versions --bucket first     # the version AND a delete mar
 
 - COMPLIANCE retention is never shortened.
 - GOVERNANCE yields only to whoever administers the bucket, with
-  `x-amz-bypass-governance-retention: true`.
+  `x-amz-bypass-governance-retention: true`; changing its mode needs the bypass, extending it does not.
+- GET and HEAD answer a locked version's Object Lock headers.
 - A kept version (retention or legal hold) cannot be deleted or rewritten by any path, lifecycle and
   the console included.
 
 ## Not implemented yet
 
-ACLs, event holds, website configuration, lifecycle transitions, tag or size lifecycle filters, topic,
-function and event-bus notification targets, and dual-layer KMS answer `NotImplemented`. A tool that
+Event holds, website configuration, lifecycle transitions, tag or size lifecycle filters, topic,
+function and event-bus notification targets, and dual-layer KMS answer `NotImplemented`. Signature
+version 2 is refused (`InvalidRequest`), as S3 refuses it. A tool that
 needs one gets that refusal, not a quiet success; turn the feature off in the tool rather than retry.

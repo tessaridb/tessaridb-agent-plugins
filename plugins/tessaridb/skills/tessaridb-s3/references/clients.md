@@ -1,7 +1,7 @@
 # Clients: AWS tools, the Rust client and tessaridb-s3-cli
 
-Checked against TessariDB S3 0.2.1-beta with the AWS CLI v2, and `tessaridb-s3-client` /
-`tessaridb-s3-cli` 0.2.0 (the Rust snippet compiled against crates.io 0.2.0 and ran against a server;
+Checked against TessariDB S3 0.8.0 with the AWS CLI v2, and `tessaridb-s3-client` /
+`tessaridb-s3-cli` 0.2.1 (the Rust snippet compiled against crates.io 0.2.1 and ran against a server;
 every CLI command below was run). Upstream: <https://docs.tessaridb.com/s3/clients/rust-client>,
 `/s3/clients/cli`.
 
@@ -19,8 +19,9 @@ aws s3 ls
 
 - An SDK: set the endpoint override, the region, and force path-style addressing.
 - Default CRC checksums sent by current SDKs are validated and stored; no setting is needed.
-- Features answered `NotImplemented` (ACLs, website, lifecycle transitions) must be switched off in
-  the tool, not retried.
+- Features answered `NotImplemented` (website, lifecycle transitions) must be switched off in the
+  tool, not retried. An ACL other than `private` or `bucket-owner-full-control` is refused
+  `AccessControlListNotSupported`.
 - `503 SlowDown` is back-pressure: let the SDK's retry with backoff handle it.
 
 ## The Rust client

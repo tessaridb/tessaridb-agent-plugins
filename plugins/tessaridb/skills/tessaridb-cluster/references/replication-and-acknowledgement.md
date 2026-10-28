@@ -1,6 +1,6 @@
 # How many copies exist, who gets them, and when a write counts
 
-Checked against TessariDB 0.36.1. Upstream: <https://docs.tessaridb.com/cluster/what-replicates-where>
+Checked against TessariDB 0.39.2. Upstream: <https://docs.tessaridb.com/cluster/what-replicates-where>
 and `/cluster/when-a-write-is-acknowledged`.
 
 Three independent questions, written in three places:

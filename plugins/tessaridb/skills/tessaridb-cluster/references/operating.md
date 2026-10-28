@@ -1,6 +1,6 @@
 # Operating a cluster: upgrades, backups, monitoring, multi-master, diagnosis
 
-Checked against TessariDB 0.36.1. Upstream: <https://docs.tessaridb.com/cluster/upgrading-a-cluster>,
+Checked against TessariDB 0.39.2 (a snapshot taken on a follower and verified whole). Upstream: <https://docs.tessaridb.com/cluster/upgrading-a-cluster>,
 `/cluster/two-writers-on-one-range`, `/operations/backup-and-restore`.
 
 ## Rolling upgrades
@@ -24,6 +24,9 @@ From 0.23 a cluster moves to the **next minor release** without stopping:
 - **0.35 → 0.36 is not a rolling upgrade.** 0.36.0 moved to the TessariKV storage engine and refuses
   a store an earlier engine wrote. Snapshot each store with the build that wrote it and restore into
   0.36 (`tessaridb new --restore snap.tessarisnap`), then form the cluster again.
+- **0.39.1 → 0.39.2 can't be undone by starting 0.39.1 again.** 0.39.2 runs on TessariKV 0.2.0, whose
+  first open stamps the node's storage files with a newer format that 0.39.1 refuses, whatever
+  `ALTER STORE FINALIZE FORMAT` says. Going back is restoring a snapshot taken before the upgrade.
 - Take a snapshot before any upgrade.
 
 ## Backups on a cluster

@@ -1,6 +1,6 @@
 # Operating TessariDB S3: metrics, access log, console, upgrades, backups, refusals
 
-Checked against TessariDB S3 0.2.1-beta. Upstream: <https://docs.tessaridb.com/s3/operating/metrics>,
+Checked against TessariDB S3 0.8.0. Upstream: <https://docs.tessaridb.com/s3/operating/metrics>,
 `/s3/operating/console`, `/s3/data-and-access/security`.
 
 ## Health
@@ -17,7 +17,15 @@ The image's health check is `tessaridb-s3 health`. The compose file waits on it
 - authentication refusals by reason; policy denials;
 - heal and replication backlogs; cluster members and those answering a probe (read at the scrape;
   `s3_collect_up` says whether that read worked);
-- access-log records written, dropped and failed.
+- access-log records written, dropped and failed;
+- the node's state (from 0.4.0): build and start time, how long the metadata store takes to answer,
+  the keys vault's state, the data drive's size and free space, the latest buckets, objects and
+  bytes, open uploads, daemon runs by outcome, and reads of data that failed verification.
+
+## Listener limits
+
+Every listener holds at most 4096 connections, closes one whose headers take over 30 s, and fails a
+body that pauses over 60 s.
 
 ## The access log
 
@@ -47,6 +55,8 @@ the network and works through `/api/v1` (see access-and-keys.md). It shows:
   the container with the same environment and volumes.
 - The metadata store moving to TessariDB 0.36 is a snapshot-and-restore, not an in-place upgrade (see
   running-and-configuration.md).
+- From 0.8.0 the shared settings live in the metadata store; going back to 0.7.0 reads them from the
+  environment again, so put back any that was removed from it first.
 
 ## What to back up
 
@@ -71,6 +81,8 @@ internal certificate authority.
 | `503 SlowDown` | too many requests in flight, or the metadata store declined a sign-in | back off and retry |
 | `503` after a metadata timeout | a metadata statement passed `_META_STATEMENT_TIMEOUT_SECS`; a write may have committed | read before rewriting |
 | `503 ServiceUnavailable` on a sealed object | the keys vault is sealed | unseal it |
+| `503 ServiceUnavailable` on writes while reads work | the data drive is below `TESSARIDB_S3_DATA_MIN_FREE_BYTES` | free space or add capacity |
+| `AccessControlListNotSupported` | an ACL other than `private` / `bucket-owner-full-control` | drop the ACL; use a policy |
 | `MalformedPolicy` | a policy statement the server cannot evaluate as written | simplify the statement |
 | `InvalidArgument` on notifications | undeclared destination, unsupported event, overlapping rules | declare the target in `TESSARIDB_S3_NOTIFY_TARGETS` |
 | `NoSuchVersion`, `405`, `404` + `x-amz-delete-marker` | versioning answers | see s3-surface.md |

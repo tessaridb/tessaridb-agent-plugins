@@ -1,6 +1,6 @@
 # Reads, routing and follower lag
 
-Checked against TessariDB 0.36.1 (follower reads and a Python client following a write redirect,
+Checked against TessariDB 0.39.2 (follower reads, the staleness floor and a Python client 0.13.0 following a write redirect,
 on a local three-node cluster). Upstream: <https://docs.tessaridb.com/cluster/reads-routing-and-staleness>.
 
 ## Two controls, both decided before the read runs

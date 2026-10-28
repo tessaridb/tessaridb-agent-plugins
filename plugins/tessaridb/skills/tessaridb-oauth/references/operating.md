@@ -20,6 +20,26 @@ answer back. Every change is recorded as `admin_action` with the operator, the r
 | `audit` | the audit trail (`/api/audit?after=&limit=`) |
 | `companies` | only in `system`: make, suspend and resume companies |
 
+### Services: a program calling the API without a console session (from 0.2.0)
+
+An operator registers the program with its Ed25519 public key and the role `users`, the only role a
+service may hold (`POST .../api/services` with `{"service_id", "jwk", "roles", "reason"}`; list with
+`GET .../api/services`, at most 20 a company; `POST .../api/services/<id>/remove`). Only an operator
+signed in to the console may do these three, so a service never mints another.
+
+The service sends each request with `Authorization: TessariService <assertion>`: a JWT it signs, of
+type `tessari-admin+jwt`, `alg` `EdDSA`, `iss` and `sub` its service id, `aud` exactly
+`<ADMIN_URL origin>/admin/<company>`, `exp` at most 60 s ahead, a `jti` used once. Anything else is
+`401 service_refused`. It still sends an `Idempotency-Key` and a `reason` with every change, recorded as
+`service:<id>`. Granting roles, revealing an address and `api/me` answer `403 console_only`.
+
+- `GET .../api/users/<user>/subject?sector=` (from 0.3.0) answers `{user, sector, subject}`: the `sub`
+  that sector's clients know the account by.
+- `GET .../api/users/by-subject?sector=&sub=` finds the account a sector's `sub` names, or
+  `404 user_not_found`. The subject is derived, never recorded, so the reverse lookup finds an account
+  only after a client of the sector has been given that subject (measured: `404` before the user's
+  first sign-in to such a client, the account after it).
+
 A role is granted by an operator who holds it, for `valid_days` (90 unless given, at most 365), never to
 oneself. Addresses are masked (`k***@acme.example`) until revealed with a reason; lists page by cursor
 with no total.
@@ -71,5 +91,5 @@ before serving traffic. Delete old snapshots on a schedule: each holds every pas
 
 ## Upgrades
 
-Pin the image (`tessaridb/oauth:0.1.0`). A start provisions every company again, so a newer release's tables
+Pin the image (`tessaridb/oauth:0.3.0`). A start provisions every company again, so a newer release's tables
 reach each of them; a start takes longer the more companies there are.
