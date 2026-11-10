@@ -2,10 +2,11 @@
 
 Plugins that let an agent work with [TessariDB](https://tessaridb.com).
 
-This repository is the **marketplace** and the plugins themselves, for **Claude Code** and for
-**Codex**: each plugin carries a manifest for both (`.claude-plugin/` and `.codex-plugin/`) and the
-same skills, and each host has its own marketplace file (`.claude-plugin/marketplace.json` and
-`.agents/plugins/marketplace.json`). Installing a plugin from here
+This repository is the **marketplace** and the plugins themselves, for **Claude Code**, **Codex**
+and **Kimi Code**: each plugin carries a manifest for all three (`.claude-plugin/`,
+`.codex-plugin/` and `kimi.plugin.json`) and the same skills, and each host has its own marketplace
+file (`.claude-plugin/marketplace.json`, `.agents/plugins/marketplace.json` and
+`.kimi-plugin/marketplace.json`). Installing a plugin from here
 clones this repository and nothing else: a plugin never drags a product's source tree along behind
 it, and that stays true whether the product is public or not.
 
@@ -57,6 +58,24 @@ codex plugin marketplace add tessaridb/tessaridb-agent-plugins
 codex plugin add tessaridb@tessaridb
 codex plugin add tessaridb-agent-memory@tessaridb
 ```
+
+In **Kimi Code**, open the custom marketplace and install both plugins from it:
+
+```shell
+/plugins marketplace https://raw.githubusercontent.com/tessaridb/tessaridb-agent-plugins/main/.kimi-plugin/marketplace.json
+```
+
+From a local checkout, install the directories directly and then reload. The recovery hook needs
+Node.js 18 or newer (it uses the built-in `fetch` and no packages):
+
+```shell
+/plugins install ./plugins/tessaridb
+/plugins install ./plugins/agent-memory
+/reload
+```
+
+Invoke a skill as `/skill:tessaridb:tessaridb-s3` or
+`/skill:tessaridb-agent-memory:agent-memory`.
 
 To keep a local copy current after a plugin is updated:
 
@@ -124,6 +143,17 @@ returns to `127.0.0.1:39144`. Either way you sign in as the owner with the passp
 and the port has to be free while you do. Codex needs a memory service from `0.3.0-alpha` on, which knows
 the `codex` client.
 
+In **Kimi Code**, the MCP connection and the recovery hook both take a bearer token from the
+environment. Set it before starting Kimi:
+
+```sh
+export TESSARI_AM_TOKEN='a bearer token for this memory service'
+```
+
+After a compaction, the plugin asks for `status` with width `me` and puts the answer into the next
+prompt exactly once. A missing token or an unreachable service produces a short notice and never
+blocks the session.
+
 If the browser lands on a page that will not open after you approve in Codex, the plugin is older
 than `0.1.1`: it told Codex where to send you back but not which port to wait on, so Codex waited on
 a random one. Update the plugin as above, or sign in once with
@@ -147,6 +177,12 @@ through the plugin:
 claude mcp add --transport http -s user --client-id claude-code --callback-port <port> \
   tessaridb-am http://127.0.0.1:39142/mcp
 ```
+
+For hosted memory in **Kimi Code**, set `mcpServers.tessaridb-am.url` in
+`plugins/agent-memory/kimi.plugin.json` to `https://memory.tessaridb.cloud/mcp` before installing,
+and set `TESSARI_AM_ENDPOINT=https://memory.tessaridb.cloud` for the recovery hook. Reinstall after
+editing the manifest: Kimi runs from its managed copy, not from the source directory. The hook also
+accepts `TESSARI_AM_SESSION` when a particular existing memory session must be named.
 
 The hosted memory signs you in with a TessariDB Cloud account, and each account gets a memory of its
 own. Claude Code cannot finish that sign-in yet: it always returns to `localhost`, and the cloud's

@@ -1,0 +1,35 @@
+{
+  "$schema": "https://kimi.com/schemas/kimi.plugin.schema.json",
+  "name": "tessaridb-agent-memory",
+  "version": "0.2.0",
+  "description": "Agent memory on TessariDB: use the memory service on this machine or the hosted one at memory.tessaridb.cloud, register the memory server, and carry the skill that says how to use it.",
+  "author": { "name": "boogvar" },
+  "homepage": "https://docs.tessaridb.com",
+  "license": "BUSL-1.1",
+  "keywords": ["memory", "agent-memory", "tessaridb", "mcp"],
+  "skills": "./skills/",
+  "mcpServers": {
+    "tessaridb-am": {
+      "url": "http://127.0.0.1:39142/mcp",
+      "bearerTokenEnvVar": "TESSARI_AM_TOKEN"
+    }
+  },
+  "hooks": [
+    {
+      "event": "PostCompact",
+      "command": "node ./hooks/kimi.mjs PostCompact",
+      "timeout": 5
+    },
+    {
+      "event": "UserPromptSubmit",
+      "command": "node ./hooks/kimi.mjs UserPromptSubmit",
+      "timeout": 2
+    }
+  ],
+  "interface": {
+    "displayName": "TessariDB Agent Memory",
+    "shortDescription": "Memory that outlives the session, stored in TessariDB",
+    "developerName": "TessariDB",
+    "websiteURL": "https://tessaridb.com"
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "version": "2",
+  "plugins": [
+    {
+      "id": "tessaridb",
+      "displayName": "TessariDB",
+      "source": "../plugins/tessaridb"
+    },
+    {
+      "id": "tessaridb-agent-memory",
+      "displayName": "TessariDB Agent Memory",
+      "source": "../plugins/agent-memory"
+    }
+  ]
+}
