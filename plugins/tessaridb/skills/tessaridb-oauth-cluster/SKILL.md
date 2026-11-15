@@ -11,7 +11,7 @@ is the same authorization server, and scaling out is starting another one. A **r
 store with its own companies; servers of one region learn the other regions through `PEERS` and
 redirect a request for a company that lives elsewhere.
 
-Checked against **TessariDB OAuth 0.3.0** (image `tessaridb/oauth:0.3.0`) on **TessariDB 0.39.2**, in
+Checked against **TessariDB OAuth 0.3.0** (image `tessaridb/oauth:0.3.0`) on **TessariDB 0.41.0**, in
 Docker: two servers on one store, and two regions on two stores with `PEERS`. The TessariDB cluster
 under one server was checked with OAuth 0.1.0 on TessariDB 0.38.2.
 
