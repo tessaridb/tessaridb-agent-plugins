@@ -25,8 +25,8 @@ it (`/tessaridb:tessaridb-s3` in Claude Code, `$tessaridb-s3` in Codex).
 
 | Skill | Use it for | Checked against |
 |---|---|---|
-| `tessaridb` | TessariQL, every engine (full text, vectors, geometry, graphs, key-value spaces, queues, topics, time series, vaults), transactions and history, the five clients, Kafka and RESP clients pointed at a node, security, running and backing up a node | TessariDB 0.41.0 |
-| `tessaridb-cluster` | standing up a cluster, replication and acknowledgement, leadership and failover, shards and placement, reads and routing, upgrades | TessariDB 0.41.0 |
+| `tessaridb` | TessariQL, every engine (full text, vectors, geometry, graphs, key-value spaces, queues, topics, time series, vaults), transactions and history, the five clients, Kafka and RESP clients pointed at a node, security, running and backing up a node | TessariDB 0.42.0 |
+| `tessaridb-cluster` | standing up a cluster, replication and acknowledgement, leadership and failover, shards and placement, reads and routing, upgrades | TessariDB 0.42.0 |
 | `tessaridb-s3` | TessariDB S3 on one node: configuration, buckets and objects, users and keys, policies, encryption, notifications, lifecycle, the clients, console sign-in through TessariDB OAuth | TessariDB S3 0.8.0; OAuth sign-in 0.7.0 |
 | `tessaridb-s3-cluster` | TessariDB S3 across nodes: erasure codes and zones, certificates, healing, layouts, joining nodes, regions | TessariDB S3 0.8.1 |
 | `tessaridb-oauth` | TessariDB OAuth on one server: configuration, operators and companies, registering applications, sign-in flows and tokens, the admin console, incidents, backup | TessariDB OAuth 0.3.0 |
