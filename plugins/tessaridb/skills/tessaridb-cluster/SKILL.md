@@ -10,7 +10,7 @@ replicate data with**. There is no coordinator process and no config file to kee
 membership is catalog records (`DEFINE REPLICA`), the failover policy is a replicated statement
 (`DEFINE FAILOVER`), and everything is a statement you can script and review.
 
-Checked against **TessariDB 0.46.0** on a local three-node cluster: forming it, writing and reading
+Checked against **TessariDB 0.47.0** on a local three-node cluster: forming it, writing and reading
 through followers, a leader killed with `kill -9` (a survivor took writes 0.54 s later), the old
 leader rejoining, all three nodes stopped and started together (a write was taken 1.1 s after the
 start), a placed shard leader, a transaction across leaders, a fourth node joining with a token, and
