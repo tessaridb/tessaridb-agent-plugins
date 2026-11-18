@@ -104,3 +104,28 @@ COMMIT ACROSS LEADERS;
 - While in flight, its records are locked: another write gets `Conflict` (retriable).
 - Prefer keeping related records under one leader (`PARTITION BY`, a shared key prefix) so most
   transactions commit in one step.
+
+## Auto-sharding: the table splits itself under load
+
+`SPLIT AUTOMATICALLY` lets the balancer cut and merge shards by measured
+load, within bounds the declaration states. Declare it on the table (a split
+point at zero makes the first automatic pass possible), then name the load
+thresholds:
+
+<!-- not run: the balancer pass needs write load over time; ran on the local cluster -->
+```tessariql
+DEFINE TABLE events SCHEMALESS IDENTITY uuid SPLIT AT 0;
+ALTER TABLE events SPLIT AUTOMATICALLY ABOVE 100000 RECORDS OR 500 WRITES PER SECOND
+  MERGE BELOW 20000 RECORDS MIN 1 SHARDS MAX 8 SHARDS;
+```
+
+- A shard splits for its load at the **median of a bounded sample of its
+  recent write keys** — hot-keyed tables split around the hot range, not at
+  a cold midpoint.
+- `MIN i SHARDS` / `MAX j SHARDS` bound how few or many shards the passes
+  leave; absent reads as min 1 / unbounded, and `MAX` below `MIN` refuses
+  at declaration (`AutoSplitMaxBelowMin`).
+- A load split cuts at the median; a thin sample falls back to the record
+  median, so even a quiet table splits somewhere sane rather than refusing.
+- Placement still follows `LEADS` / `SPREAD`: auto-sharding decides *how
+  many* shards, not *where* they live.

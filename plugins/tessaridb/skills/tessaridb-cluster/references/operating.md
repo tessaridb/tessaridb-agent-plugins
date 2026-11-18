@@ -90,3 +90,35 @@ INFO FOR VERSIONS OF orders:1;
 | `MajorityUnreachable` | subscriptions vs voters | too few voters subscribe to the written range |
 | all inserts go to one node | `INFO FOR TABLE` shards | split over generated uuids without `SPREAD` |
 | `log divergence at …` | `tessari_log_divergences` | two histories; the follower re-bootstraps |
+
+## What a node sees: resources and the membership as rows
+
+Every node samples its machine — CPU cores and busy time, memory used,
+the store volume's disk free and total, network received and transmitted —
+and serves the sample to new-enough peers on the peer greeting. `INFO FOR
+NODE` answers it two ways: `resources` for this process's own machine, and
+each bound peer's `readings` labelled by `observed` age with a `stale`
+verdict past twice the awareness period.
+
+```tessariql
+INFO FOR NODE;
+-- resources: { cpu_cores, cpu_busy, memory_used, memory_total, disk_free,
+--   disk_total, network_received, network_transmitted, observed }
+-- bound peers ride under their rows with the readings this node last heard.
+```
+
+`SELECT * FROM $nodes` answers the membership as rows — one per `DEFINE
+REPLICA`, each with the heard readings riding the bound rows, rendered by
+the same freshness verdict as `INFO FOR NODE`. A store nobody declared a
+membership on answers **zero rows**: the empty table is the honest answer,
+and this node does not invent a row for itself.
+
+```tessariql
+SELECT * FROM $nodes;
+```
+
+Both surfaces refuse a caller whose role cannot see them — the same
+`Administer` reach `$node` always needed. At grown-cluster density the
+console's Servers table rides these rows (find, sort, filters by status
+and resources, a drawer per server) — the statements above are what the
+screen reads.

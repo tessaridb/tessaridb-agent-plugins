@@ -152,8 +152,8 @@ feature). Both are at <https://docs.tessaridb.com/query-language/stream-ingestio
 
 ```tessariql
 DEFINE SERIES readings RETAIN 30d TIME at;
-CREATE readings = { sensor: 'boiler', v: 71.5, at: datetime '2026-09-29T10:00:00Z' };
-CREATE readings = { sensor: 'boiler', v: 73.0, at: datetime '2026-09-29T12:10:00Z' };
+CREATE readings = { sensor: 'boiler', v: 71.5, at: time::now() };
+CREATE readings = { sensor: 'boiler', v: 73.0, at: time::now() };
 SELECT time::bucket(at, 1h) AS hour, count(*) AS n, mean(v) AS v
 FROM readings GROUP BY time::bucket(at, 1h);
 DEFINE INDEX by_sensor ON readings FIELDS sensor;

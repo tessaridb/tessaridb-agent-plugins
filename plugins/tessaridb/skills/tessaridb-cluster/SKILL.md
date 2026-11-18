@@ -1,6 +1,6 @@
 ---
 name: tessaridb-cluster
-description: Deploy and run a TessariDB cluster. Use when standing up several TessariDB nodes, issuing their peer certificates, adding, approving, draining or removing a node, choosing replication and write acknowledgement, handling leader failover and the refusals around it, splitting a table into shards and placing shard leaders, committing a transaction across leaders, routing reads by staleness or to the leader, running multi-master namespaces, upgrading a cluster node by node, or diagnosing a cluster from INFO FOR NODE. For the language and a single node, use the tessaridb skill.
+description: Deploy and run a TessariDB cluster. Use when standing up several TessariDB nodes, issuing their peer certificates, adding, approving, draining or removing a node, choosing replication and write acknowledgement, handling leader failover and the refusals around it, splitting a table into shards, placing shard leaders, letting the table split itself under load, committing a transaction across leaders, routing reads by staleness or to the leader, running multi-master namespaces, upgrading a cluster node by node, or diagnosing a cluster from INFO FOR NODE. For the language and a single node, use the tessaridb skill.
 ---
 
 # TessariDB cluster
@@ -10,7 +10,7 @@ replicate data with**. There is no coordinator process and no config file to kee
 membership is catalog records (`DEFINE REPLICA`), the failover policy is a replicated statement
 (`DEFINE FAILOVER`), and everything is a statement you can script and review.
 
-Checked against **TessariDB 0.49.0** on a local three-node cluster: forming it, writing and reading
+Checked against **TessariDB 0.49.1** on a local three-node cluster: forming it, writing and reading
 through followers, a leader killed with `kill -9` (a survivor took writes 0.54 s later), the old
 leader rejoining, all three nodes stopped and started together (a write was taken 1.1 s after the
 start), a placed shard leader, a transaction across leaders, a fourth node joining with a token, and
@@ -22,10 +22,11 @@ a Python client 0.13.0 creating a record and a user through a follower. Upstream
 |---|---|
 | standing up a cluster, issuing certificates, adding / approving / removing a node | [references/standing-up.md](references/standing-up.md) |
 | deciding how many copies exist and when a write counts | [references/replication-and-acknowledgement.md](references/replication-and-acknowledgement.md) |
+| declaring realms and domains, pooling tenants, replicating across clusters | [references/topology-and-tenancy.md](references/topology-and-tenancy.md) |
 | understanding leases, failover, the two "no" answers, the failover policy, draining | [references/leadership-and-failover.md](references/leadership-and-failover.md) |
 | splitting a table, placing shard leaders, transactions across leaders | [references/shards-and-placement.md](references/shards-and-placement.md) |
 | routing reads (`STALENESS`, `ANSWERED BY LEADER`), redirects, follower lag | [references/reads-and-routing.md](references/reads-and-routing.md) |
-| upgrading, backing up, monitoring, multi-master, diagnosing a cluster | [references/operating.md](references/operating.md) |
+| upgrading, backing up, monitoring, the node-state surface, multi-master, diagnosing a cluster | [references/operating.md](references/operating.md) |
 
 ## Try it locally first
 
