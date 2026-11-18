@@ -11,7 +11,7 @@ codes, grants, consents, sessions, sealed signing keys, request counters and the
 in a TessariDB store; the server keeps nothing else. Company `acme` is the issuer `<PUBLIC_URL>/acme`.
 
 Checked against **TessariDB OAuth 0.3.0** (image `tessaridb/oauth:0.3.0`, linux/amd64 and linux/arm64)
-on **TessariDB 0.48.0**: started as in the compose file below, an operator enrolled with an
+on **TessariDB 0.49.0**: started as in the compose file below, an operator enrolled with an
 authenticator app and signed in to the console, clients registered with and without a sector, a user
 signed in with PKCE, and a service called the admin API with a signed assertion. The configuration and
 the HTTP surface may still change in a minor release before 1.0, so pin the image tag.
