@@ -85,10 +85,74 @@ UTF-8, conforming strings); read-only parameters refuse `SET` and answer
 `SHOW`. `search_path` keeps the only effect — it still moves the
 connection between namespaces. `SET LOCAL` is not spoken.
 
+## Bulk and conflict: COPY, VALUES, ON CONFLICT
+
+```sql
+COPY orders FROM STDIN;
+COPY (SELECT * FROM orders WHERE band = 3) TO STDOUT;
+INSERT INTO orders (id, band) VALUES (1, 2), (3, 4);
+INSERT INTO orders (id, band) VALUES (1, 2) ON CONFLICT DO NOTHING;
+INSERT INTO orders (id, band) VALUES (1, 2)
+    ON CONFLICT (id) DO UPDATE SET band = excluded.band;
+```
+
+`COPY` streams rows in both directions, into one table or out of any plain
+`SELECT`. Multi-row `VALUES` lands every row in one statement. `ON CONFLICT`
+takes `DO NOTHING` and `DO UPDATE SET … = excluded.col` keyed on the record
+id — the engine's compare-and-set under another name; arbiter forms the
+engine cannot key (`ON CONFLICT ON CONSTRAINT`) and `DO UPDATE … WHERE`
+refuse by name.
+
+## Pattern, cast and combine
+
+```sql
+SELECT name FROM orders WHERE name LIKE 'a%' AND code ILIKE '%X%';
+SELECT id, '42'::int, ts::text FROM orders;
+SELECT id FROM a UNION ALL SELECT id FROM b;
+SELECT pg_get_viewdef('myview');
+```
+
+`LIKE`/`ILIKE` and the operator family (`~~`, `!~~`, `~~*`, `!~~*`) ride the
+engine's string matching. A `::` cast answers where the conversion is exact
+and refuses otherwise. `UNION [ALL]` passes through; the other set verbs
+refuse by name. `pg_get_viewdef` answers a view's own declaration.
+
+## Savepoints and compound ordering
+
+```sql
+BEGIN;
+SAVEPOINT s1;
+-- ...
+ROLLBACK TO s1;
+RELEASE SAVEPOINT s1;
+COMMIT;
+SELECT name, band FROM orders ORDER BY name ASC, band DESC LIMIT 20;
+```
+
+Savepoints carry the engine's own semantics — a rollback across a claim (a
+queue claim, or a row claim a locking read took) refuses by name. Compound
+`ORDER BY` sorts by the whole key on the wire.
+
+## Locking reads: claims, not waits
+
+```sql
+SELECT * FROM orders WHERE band = 1 ORDER BY id LIMIT 1 FOR UPDATE SKIP LOCKED;
+SELECT * FROM orders WHERE id = 3 FOR UPDATE NOWAIT;
+```
+
+`FOR UPDATE` takes a row claim the holding transaction's commit or cancel
+releases. The engine never waits: a row claimed elsewhere refuses `55P03`
+naming the record — so bare `FOR UPDATE` has `NOWAIT` semantics — and `SKIP
+LOCKED` omits claimed rows and backfills the limit. The shared strengths
+(`FOR SHARE`, `FOR NO KEY UPDATE`, `FOR KEY SHARE`) refuse `0A000`, and a
+stranger table in `OF` is `42P01`.
+
 ## Refused by name, never approximated
 
 `OFFSET $1` · `ALTER TABLE … ADD CONSTRAINT` · `ALTER COLUMN … USING` ·
 `SET work_mem` (unreported settings) · `SET client_encoding TO 'LATIN1'` ·
-the wider json functions. Each answers `0A000` naming the thing; the
+the wider json functions · `FOR SHARE` / `FOR NO KEY UPDATE` / `FOR KEY
+SHARE` · the remaining set verbs (`INTERSECT`, `EXCEPT`). Each answers
+`0A000` naming the thing; a locking read's contention answers `55P03`; the
 catalog introspection the dialect's clients send (`psql \d`, listings)
 answers from the store's own shape.
