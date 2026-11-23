@@ -9,7 +9,14 @@ TessariDB is one database with several engines: tables and documents, full-text 
 geometry, graphs, key-value spaces, files, queues, topics, time series and vaults. Every engine is
 reached through one language, **TessariQL**, and one transaction can write to all of them.
 
-This skill was checked against **TessariDB 0.51.0** — row-level
+This skill was checked against **TessariDB 0.52.1** — the server
+binary allocates through mimalloc from 0.52.1, measured at roughly 13%
+across the benchmark suite's scenario groups with no statement, wire or
+on-disk change. From 0.52.0 a vector index may be partitioned:
+`DEFINE INDEX … VECTOR <metric> PARTITIONS n` keeps the corpus as trained
+partitions over product-quantized codes, and an `APPROXIMATE` read probes
+the nearest partitions and re-ranks the candidates on the full vectors.
+From 0.51.0 — row-level
 security: `GRANT … ON <table> WHERE (<predicate>)` narrows a grant to the rows
 the predicate reaches (guards on one user and table AND), `ALTER TABLE …
 ENABLE/DISABLE ROW SECURITY` is the per-table switch (default off), the session
@@ -33,7 +40,7 @@ transaction with `NOWAIT`/`SKIP LOCKED` (the engine never waits; contention
 refuses `55P03`) and the shared strengths refused by name. The wire itself: `--pg <host:port>` (or
 `TESSARIDB_PG`) speaks it on 5432 by convention, off unless named, and psql,
 psycopg and the ecosystem's other clients connect, authenticate and read the
-store's own tables (image `tessaridb/tessaridb:0.51.0`, clients
+store's own tables (image `tessaridb/tessaridb:0.52.1`, clients
 `0.14.0`, protocol `1.6`). The language and the wire format can still change before 1.0, so name
 the version when behaviour matters. The documentation at <https://docs.tessaridb.com> is the
 reference; when it and this skill disagree, trust the site.
@@ -65,10 +72,10 @@ it. A store in memory costs nothing and disappears when the process exits:
 
 ```sh
 # with the image (no install):
-docker run --rm tessaridb/tessaridb:0.51.0 -e "DEFINE NAMESPACE t; USE NAMESPACE t; DEFINE DATABASE t; USE DATABASE t; DEFINE COLLECTION notes; CREATE notes:1 = { body: 'hi' }; SELECT * FROM notes;"
+docker run --rm tessaridb/tessaridb:0.52.1 -e "DEFINE NAMESPACE t; USE NAMESPACE t; DEFINE DATABASE t; USE DATABASE t; DEFINE COLLECTION notes; CREATE notes:1 = { body: 'hi' }; SELECT * FROM notes;"
 
 # a script file, with a bound parameter:
-docker run --rm -v "$PWD:/work:ro" tessaridb/tessaridb:0.51.0 -f /work/try.tessariql --param who="'ada'"
+docker run --rm -v "$PWD:/work:ro" tessaridb/tessaridb:0.52.1 -f /work/try.tessariql --param who="'ada'"
 
 # with the binary: in memory, on disk, or against a running node
 tessaridb -e '<script>'
@@ -89,7 +96,7 @@ TESSARIDB_PASSWORD='…' tessaridb --at 127.0.0.1:9080 --user owner -f check.tes
 docker run -d --name tessaridb -p 9080:9080 -p 8000:8000 \
   -v tessaridb-data:/var/lib/tessaridb \
   -e TESSARIDB_INITIAL_USER=owner -e TESSARIDB_INITIAL_PASSWORD='choose-a-real-one' \
-  tessaridb/tessaridb:0.51.0
+  tessaridb/tessaridb:0.52.1
 ```
 
 Port 9080 is the wire protocol the clients use; port 8000 is HTTP and serves the web console at
