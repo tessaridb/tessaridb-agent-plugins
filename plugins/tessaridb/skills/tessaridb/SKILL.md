@@ -9,8 +9,15 @@ TessariDB is one database with several engines: tables and documents, full-text 
 geometry, graphs, key-value spaces, files, queues, topics, time series and vaults. Every engine is
 reached through one language, **TessariQL**, and one transaction can write to all of them.
 
-This skill was checked against **TessariDB 0.52.1** — the server
-binary allocates through mimalloc from 0.52.1, measured at roughly 13%
+This skill was checked against **TessariDB 0.53.0** — strong graphs:
+bounded traversal segments `->knows[*1..3]->` with the contextual `path`
+projection, `PATH TO … ALL` and `K n` path enumeration (4096-path ceiling,
+`PathSearchTooWide`), graph algorithms as a read source
+(`FROM GRAPH web BY pagerank | wcc | cdlp | betweenness | harmonic | sssp
+[FROM <record>] [USING <kind>]`, one `{node, score}` row per node), per-hop
+landing estimates on traversal plans from `ANALYZE TABLE` statistics. From
+0.52.1 the server
+binary allocates through mimalloc (since 0.52.1), measured at roughly 13%
 across the benchmark suite's scenario groups with no statement, wire or
 on-disk change. From 0.52.0 a vector index may be partitioned:
 `DEFINE INDEX … VECTOR <metric> PARTITIONS n` keeps the corpus as trained
