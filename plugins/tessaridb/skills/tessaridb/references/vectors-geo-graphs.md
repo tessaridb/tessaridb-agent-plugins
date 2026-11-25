@@ -143,4 +143,41 @@ DELETE users:1->follows->users:2;
   when that matters.
 - An existing table can join a declared graph with `IN social`. A graph and an edge kind are dropped
   only once nothing still belongs to them.
+
+### Bounded segments, path enumeration and algorithms (0.53.0)
+
+A step can be repeated as a **bounded segment** — `->knows[*1..3]->` walks the same step one to
+three times breadth-first, with one statement-wide seen set so a cycle answers once record:
+
+```tessariql
+SELECT name, path FROM social:1->knows[*1..2]->social;
+```
+
+The `path` projection answers the chain that reached each record. A segment starts at one
+(`[*0..n]` refuses `RepeatBelowOne`), refuses a minimum above its maximum (`RepeatAboveMax`),
+walks only declared edge kinds (`RepeatOnEdgeTable`), needs a node to land on
+(`RepeatNeedsTarget`), and is the bound itself — `DEPTH` beside it refuses `DepthWithRepeat`.
+
+`PATH TO` enumerates. `ALL` answers every simple path the written `DEPTH` admits — one array row
+per path with a per-path note — and `K n` answers the n cheapest, cheapest first:
+
+```tessariql
+SELECT * FROM social:1->knows->social PATH TO social:3 DEPTH 3 ALL;
+SELECT * FROM social:1->knows->social PATH TO social:3 DEPTH 3 K 2;
+```
+
+Enumeration is ceilinged at 4096 paths (`PathSearchTooWide` past it — narrow with a smaller
+`DEPTH`).
+
+Whole-graph algorithms are a read source over a declared graph, answering `{node, score}` rows
+under the reader's grants:
+
+```tessariql
+SELECT * FROM GRAPH social BY pagerank;
+SELECT * FROM GRAPH social BY sssp FROM social:1 USING knows;
+```
+
+`pagerank`, `wcc`, `cdlp`, `betweenness` and `harmonic` read the whole graph; `sssp` needs its
+start record (`AlgorithmNeedsStart`, and the others refuse one with `AlgorithmTakesNoStart`).
+`USING` names the edge kind to walk (`EdgeKindNotInGraph` when the graph does not declare it).
 - A join matches a value nobody wrote down as a link; when records point at each other, traverse.

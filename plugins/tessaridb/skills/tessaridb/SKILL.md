@@ -60,7 +60,7 @@ refuses `55P03`) and the shared strengths refused by name. The wire itself: `--p
 `TESSARIDB_PG`) speaks it on 5432 by convention, off unless named, and psql,
 psycopg and the ecosystem's other clients connect, authenticate and read the
 store's own tables (image `tessaridb/tessaridb:0.54.0`, clients
-`0.14.0`, protocol `1.6`). The language and the wire format can still change before 1.0, so name
+`0.14.0`, protocol `1.8`). The language and the wire format can still change before 1.0, so name
 the version when behaviour matters. The documentation at <https://docs.tessaridb.com> is the
 reference; when it and this skill disagree, trust the site.
 
