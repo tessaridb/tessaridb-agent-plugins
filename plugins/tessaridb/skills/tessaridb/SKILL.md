@@ -9,8 +9,30 @@ TessariDB is one database with several engines: tables and documents, full-text 
 geometry, graphs, key-value spaces, files, queues, topics, time series and vaults. Every engine is
 reached through one language, **TessariQL**, and one transaction can write to all of them.
 
-This skill was checked against **TessariDB 0.54.0** — columnar pruning, a
-search-term fingerprint filter and a statement compile cache: a `STORE COLUMN`
+This skill was checked against **TessariDB 0.55.0** — fold states, kept-view
+answers, `SORT BY` on columnar tables, and AI providers with the `ai::` calls:
+`state::of(<fold>)` answers a group's accumulator state instead of its finish,
+a `fold_state` field stores it (value tag `0x12`, store format 19),
+`state::merge` folds states of one fold into one (another fold's state refuses
+`StateFoldMismatch`) and `state::finish` answers the fold's own answer; a
+grouped read over a table a grouped materialized view covers is answered from
+the view's stored rows when the rewrite is provably sound, carrying an
+`answered-by-view` note; `DEFINE TABLE … STORE COLUMN SORT BY g` lays chunks
+out in key order and a chunk-head index seeks only the chunks that can match
+(store format 20); `DEFINE AI PROVIDER` declares where the namespace's `ai::`
+calls go — the endpoint (`https` only), the model, the key named as a vault
+secret and never written, a required `BUDGET` and `TIMEOUT` — and
+`ai::generate(prompt)` is one budgeted provider call (a token bucket refuses
+`AiBudgetSpent` rather than queueing; refusals carry the status class, never
+the body), with `ai::summarize` / `classify` / `extract` / `translate` the
+same call with the instruction written and `EXPLAIN` reporting `ai-calls: n`;
+`top_k(<expr>, <k>)` answers the `k` most common values exactly; the calendar
+(`time::day_of_week` … `start_of_year`), series (`series::outliers_tukey` /
+`period_detect` / `decompose_stl`), math/string/array breadth, `rand::uuid7()`
+and the counter-family folds (`resets`, `deriv`, `predict_linear`,
+`downsample`, the `decayed_` folds) round out the release. From 0.54.0 —
+columnar pruning, a search-term fingerprint filter and a statement compile
+cache: a `STORE COLUMN`
 family's pointer records each lane's sealed min/max (a pointer written before
 0.54.0 reads as disabled, never as a range that might understate), an equality
 or `IN`-list probe skips chunks the range cannot hold before their heads are
@@ -59,7 +81,7 @@ transaction with `NOWAIT`/`SKIP LOCKED` (the engine never waits; contention
 refuses `55P03`) and the shared strengths refused by name. The wire itself: `--pg <host:port>` (or
 `TESSARIDB_PG`) speaks it on 5432 by convention, off unless named, and psql,
 psycopg and the ecosystem's other clients connect, authenticate and read the
-store's own tables (image `tessaridb/tessaridb:0.54.0`, clients
+store's own tables (image `tessaridb/tessaridb:0.55.0`, clients
 `0.14.0`, protocol `1.8`). The language and the wire format can still change before 1.0, so name
 the version when behaviour matters. The documentation at <https://docs.tessaridb.com> is the
 reference; when it and this skill disagree, trust the site.
@@ -91,10 +113,10 @@ it. A store in memory costs nothing and disappears when the process exits:
 
 ```sh
 # with the image (no install):
-docker run --rm tessaridb/tessaridb:0.54.0 -e "DEFINE NAMESPACE t; USE NAMESPACE t; DEFINE DATABASE t; USE DATABASE t; DEFINE COLLECTION notes; CREATE notes:1 = { body: 'hi' }; SELECT * FROM notes;"
+docker run --rm tessaridb/tessaridb:0.55.0 -e "DEFINE NAMESPACE t; USE NAMESPACE t; DEFINE DATABASE t; USE DATABASE t; DEFINE COLLECTION notes; CREATE notes:1 = { body: 'hi' }; SELECT * FROM notes;"
 
 # a script file, with a bound parameter:
-docker run --rm -v "$PWD:/work:ro" tessaridb/tessaridb:0.54.0 -f /work/try.tessariql --param who="'ada'"
+docker run --rm -v "$PWD:/work:ro" tessaridb/tessaridb:0.55.0 -f /work/try.tessariql --param who="'ada'"
 
 # with the binary: in memory, on disk, or against a running node
 tessaridb -e '<script>'
@@ -115,7 +137,7 @@ TESSARIDB_PASSWORD='…' tessaridb --at 127.0.0.1:9080 --user owner -f check.tes
 docker run -d --name tessaridb -p 9080:9080 -p 8000:8000 \
   -v tessaridb-data:/var/lib/tessaridb \
   -e TESSARIDB_INITIAL_USER=owner -e TESSARIDB_INITIAL_PASSWORD='choose-a-real-one' \
-  tessaridb/tessaridb:0.54.0
+  tessaridb/tessaridb:0.55.0
 ```
 
 Port 9080 is the wire protocol the clients use; port 8000 is HTTP and serves the web console at
