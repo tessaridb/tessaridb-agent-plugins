@@ -9,7 +9,16 @@ TessariDB is one database with several engines: tables and documents, full-text 
 geometry, graphs, key-value spaces, files, queues, topics, time series and vaults. Every engine is
 reached through one language, **TessariQL**, and one transaction can write to all of them.
 
-This skill was checked against **TessariDB 0.55.0** — fold states, kept-view
+This skill was checked against **TessariDB 0.56.0** — thirty new folds
+(`corr`/`covar`/`regr_*`, `quantiles`/`exact_quantiles`, `skewness`/`kurtosis`/
+`entropy`/`gini`/`histogram`, the series edge family `changes`/`irate`/`idelta`/
+`ts_of_*`/`moving_*`/`mad`/`string_agg`, `window_funnel`/`sequence_match`/
+`sequence_count`/`retention`, `sum_by`/`min_by`/`max_by`), `FILTER (WHERE …)`
+and `DISTINCT` on a fold, `ntile`/`percent_rank`/`cume_dist`/`nth_value` over a
+window, `vector::manhattan`/`hamming`/`jaccard`, `uuid::version`,
+`time::format`, the `geo::cell_*` navigation, conditional expiry
+(`EXPIRE AFTER d WHERE …`), `KEEP RAW` age-triggered re-aggregation and
+Prometheus remote-read — on top of 0.55.0's fold states, kept-view
 answers, `SORT BY` on columnar tables, and AI providers with the `ai::` calls:
 `state::of(<fold>)` answers a group's accumulator state instead of its finish,
 a `fold_state` field stores it (value tag `0x12`, store format 19),
@@ -81,7 +90,7 @@ transaction with `NOWAIT`/`SKIP LOCKED` (the engine never waits; contention
 refuses `55P03`) and the shared strengths refused by name. The wire itself: `--pg <host:port>` (or
 `TESSARIDB_PG`) speaks it on 5432 by convention, off unless named, and psql,
 psycopg and the ecosystem's other clients connect, authenticate and read the
-store's own tables (image `tessaridb/tessaridb:0.55.0`, clients
+store's own tables (image `tessaridb/tessaridb:0.56.0`, clients
 `0.14.0`, protocol `1.8`). The language and the wire format can still change before 1.0, so name
 the version when behaviour matters. The documentation at <https://docs.tessaridb.com> is the
 reference; when it and this skill disagree, trust the site.
@@ -113,10 +122,10 @@ it. A store in memory costs nothing and disappears when the process exits:
 
 ```sh
 # with the image (no install):
-docker run --rm tessaridb/tessaridb:0.55.0 -e "DEFINE NAMESPACE t; USE NAMESPACE t; DEFINE DATABASE t; USE DATABASE t; DEFINE COLLECTION notes; CREATE notes:1 = { body: 'hi' }; SELECT * FROM notes;"
+docker run --rm tessaridb/tessaridb:0.56.0 -e "DEFINE NAMESPACE t; USE NAMESPACE t; DEFINE DATABASE t; USE DATABASE t; DEFINE COLLECTION notes; CREATE notes:1 = { body: 'hi' }; SELECT * FROM notes;"
 
 # a script file, with a bound parameter:
-docker run --rm -v "$PWD:/work:ro" tessaridb/tessaridb:0.55.0 -f /work/try.tessariql --param who="'ada'"
+docker run --rm -v "$PWD:/work:ro" tessaridb/tessaridb:0.56.0 -f /work/try.tessariql --param who="'ada'"
 
 # with the binary: in memory, on disk, or against a running node
 tessaridb -e '<script>'
@@ -137,7 +146,7 @@ TESSARIDB_PASSWORD='…' tessaridb --at 127.0.0.1:9080 --user owner -f check.tes
 docker run -d --name tessaridb -p 9080:9080 -p 8000:8000 \
   -v tessaridb-data:/var/lib/tessaridb \
   -e TESSARIDB_INITIAL_USER=owner -e TESSARIDB_INITIAL_PASSWORD='choose-a-real-one' \
-  tessaridb/tessaridb:0.55.0
+  tessaridb/tessaridb:0.56.0
 ```
 
 Port 9080 is the wire protocol the clients use; port 8000 is HTTP and serves the web console at
